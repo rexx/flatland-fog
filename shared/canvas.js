@@ -72,5 +72,41 @@
     const mx=12+(theta%360)/360*(w-24);g.strokeStyle=token('--marker');g.lineWidth=1.5;g.beginPath();g.moveTo(mx,tp);g.lineTo(mx,tp+th2);g.stroke();
   }
 
-  global.FlatlandCanvas={token,setup,drawStrip,drawProfile,drawTop,drawTrace};
+  function hexToRgb(hex){const n=parseInt(hex.replace('#',''),16);return[(n>>16)&255,(n>>8)&255,n&255];}
+  function mixRgb(a,b,t){return'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')';}
+
+  function mixArr(a,b,t){return a.map((v,i)=>v+(b[i]-v)*t);}
+
+  // Black-and-white version of the Flatlander's line: ink where near, fading into fog where far,
+  // on the paper background where nothing is in view. presence (0 to 1) blends the whole figure
+  // in from the paper, for figures still emerging from the distance.
+  function drawInkStrip(c,prof,presence){
+    const[g,w,h]=setup(c);
+    const paperHex=token('--paper'),paper=hexToRgb(paperHex);
+    const ink=hexToRgb(token('--ink'));
+    const fog=mixArr(paper,hexToRgb(token('--fog')),presence===undefined?1:presence);
+    g.fillStyle=paperHex;g.fillRect(0,0,w,h);
+    g.strokeStyle=token('--paper-grid');g.lineWidth=1;g.beginPath();
+    for(let x=-h;x<w;x+=8){g.moveTo(x,h);g.lineTo(x+h,0);}
+    g.stroke();
+    const cw=w/prof.length;
+    prof.forEach((b,i)=>{if(b===null)return;g.fillStyle=mixRgb(fog,ink,Math.max(0,Math.min(1,b)));g.fillRect(i*cw,0,cw+0.6,h);});
+  }
+
+  // Brightness across the field of view; ghost is an earlier profile drawn dashed for comparison.
+  function drawInkProfile(c,prof,labels,ghost){
+    const[g,w,h]=setup(c);const pad=8,ph=h-2*pad;
+    g.strokeStyle=token('--line');g.lineWidth=1;g.beginPath();g.moveTo(0,h-pad);g.lineTo(w,h-pad);g.moveTo(0,pad);g.lineTo(w,pad);g.stroke();
+    g.fillStyle=token('--muted');g.font=MONO;g.fillText(labels.bright,4,pad+12);g.fillText(labels.dim,4,h-pad-4);
+    const line=(p,dash,width,color)=>{
+      g.setLineDash(dash);g.strokeStyle=color;g.lineWidth=width;g.beginPath();let on=false;
+      p.forEach((b,i)=>{const x=i*w/(p.length-1);if(b===null){on=false;return;}const y=pad+(1-b)*ph;on?g.lineTo(x,y):g.moveTo(x,y);on=true;});
+      g.stroke();g.setLineDash([]);
+    };
+    if(ghost)line(ghost.prof,[5,4],1.5,token('--muted'));
+    line(prof,[],2,token('--ink'));
+    if(ghost&&ghost.label){g.fillStyle=token('--muted');g.font=MONO;g.fillText(ghost.label,w-g.measureText(ghost.label).width-6,pad+12);}
+  }
+
+  global.FlatlandCanvas={token,setup,drawStrip,drawProfile,drawTop,drawTrace,drawInkStrip,drawInkProfile};
 })(window);

@@ -27,10 +27,20 @@ PARTS = {
     "part-2": ("II", "Other Worlds"),
 }
 
-# Interactives embedded in a section: (figure id to insert after, or None for the end; path; title).
+# Interactives embedded in a section. "after" is a figure id, or "text:<phrase>" to insert after
+# the first paragraph containing that phrase, or None for the end of the section.
 EMBEDS = {
-    1: [("illustration-1", "coin-on-table", "Lower your eye to the table")],
-    6: [("illustration-4", "recognition-by-sight", "Recognition by sight")],
+    1: [
+        {"after": "illustration-1", "slug": "coin-on-table", "title": "Lower your eye to the table"},
+    ],
+    6: [
+        {"after": "text:the Merchant, what shall I see", "slug": "recognition-by-sight",
+         "query": "scene=merchant", "title": "The Merchant"},
+        {"after": "text:the Physician, though I shall", "slug": "recognition-by-sight",
+         "query": "scene=physician", "title": "The Physician"},
+        {"after": "text:contemplating one of his sides", "slug": "recognition-by-sight",
+         "query": "scene=grandson", "title": "A hexagonal grandson"},
+    ],
 }
 
 KEEP_ATTRS = {"id", "href", "src", "alt", "title", "lang"}
@@ -109,7 +119,10 @@ def read_chapter(src, name):
         hgroup = section.find(f"{XHTML}hgroup")
         ordinal = hgroup.find(f"{XHTML}h3").text.strip()
         title = "".join(hgroup.find(f"{XHTML}p").itertext()).strip()
-    blocks = [(child.get("id"), serialize(child)) for child in section if local(child.tag) not in ("hgroup", "header")]
+    blocks = [
+        {"id": child.get("id"), "html": serialize(child), "text": re.sub(r"\s+", " ", "".join(child.itertext()))}
+        for child in section if local(child.tag) not in ("hgroup", "header")
+    ]
     return {"name": name, "title": title, "ordinal": ordinal, "part": section.get("data-parent"), "blocks": blocks}
 
 
@@ -131,22 +144,41 @@ def page_head(title, depth):
 """
 
 
-def embed_html(slug, title):
-    src = f"../interactives/{slug}/index.html"
+def embed_html(embed):
+    src = f"../interactives/{embed['slug']}/index.html"
+    if embed.get("query"):
+        src += "?" + embed["query"]
+    title = html.escape(embed["title"])
     return f"""<figure class="interactive">
-<iframe src="{src}" title="{html.escape(title)}" loading="lazy"></iframe>
-<figcaption><span>Interactive · {html.escape(title)}</span><a href="{src}">Open on its own page</a></figcaption>
+<iframe src="{html.escape(src)}" title="{title}" loading="lazy"></iframe>
+<figcaption><span>Interactive · {title}</span><a href="{html.escape(src)}">Open on its own page</a></figcaption>
 </figure>"""
+
+
+def anchored_here(after, block):
+    if not after:
+        return False
+    if after.startswith("text:"):
+        return after[len("text:"):] in block["text"]
+    return after == block["id"]
 
 
 def chapter_page(ch, prev, nxt, notes, epigraph):
     number = int(ch["name"].split("-")[1]) if ch["name"].startswith("chapter-") else 0
     embeds = EMBEDS.get(number, [])
     body = []
-    for block_id, block in ch["blocks"]:
-        body.append(block)
-        body.extend(embed_html(slug, title) for after, slug, title in embeds if after == block_id)
-    body.extend(embed_html(slug, title) for after, slug, title in embeds if after is None)
+    placed = set()
+    for block in ch["blocks"]:
+        body.append(block["html"])
+        for i, embed in enumerate(embeds):
+            if i not in placed and anchored_here(embed["after"], block):
+                body.append(embed_html(embed))
+                placed.add(i)
+    for i, embed in enumerate(embeds):
+        if i not in placed:
+            if embed["after"]:
+                sys.exit(f"section {number}: anchor not found: {embed['after']}")
+            body.append(embed_html(embed))
 
     refs = re.findall(r'href="#(note-\d+)"', "".join(body))
     notes_html = ""

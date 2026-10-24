@@ -31,7 +31,8 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | Section | Interactive | Status |
 |---|---|---|
 | I | Lower your eye to the table (`coin-on-table`) | Done |
-| VI | Recognition by sight (`recognition-by-sight`) | Embedded, not yet moved in |
+| VI | Recognition by sight (`recognition-by-sight`): the Merchant, the Physician and a hexagonal grandson walk out of the fog | Done |
+| VI | The recognition game (`recognition-game`): turn any figure in the fog, then test your eye; linked from the Section VI animation | Done |
 
 ## Regenerating the text
 

@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Recognition Game · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none}
+.formula{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-top:8px}
+.pane{display:flex;flex-direction:column;gap:12px}
+.answers{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.answers button.ok{border:2px solid var(--fg);font-weight:600}
+.answers button.bad{border-style:dashed;color:var(--muted);text-decoration:line-through}
+.result{font-family:var(--font-text);font-size:17px;min-height:1.6em}
+.score{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+@media (min-height:720px){
+  .obs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;box-shadow:0 8px 16px -12px rgba(0,0,0,0.35)}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/06-of-recognition-by-sight.html">← Section VI · Of Recognition by Sight</a>
+    <h1>The recognition game</h1>
+    <p>Turn any figure in the fog and watch how its line changes, then test yourself: a stranger turns in front of you, and you name the shape from the line alone.</p>
+    <div class="formula">observer distance D = 3.2R · brightness = exp(−k·(d − (D − R))) · k = fog density</div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Mode">
+    <button id="tab-explore" role="tab" aria-selected="true" aria-controls="explore">Explore</button>
+    <button id="tab-test" role="tab" aria-selected="false" aria-controls="test">Test</button>
+  </div>
+
+  <section id="explore" class="pane" role="tabpanel" aria-labelledby="tab-explore">
+    <div class="panel obs">
+      <div class="row" style="justify-content:space-between">
+        <span class="cap" id="viewCap" style="margin:0;flex:1;min-width:12em"></span>
+        <div class="tabs" role="group" aria-label="Viewpoint">
+          <button id="m1d" aria-pressed="true">Flatlander</button>
+          <button id="m3d" aria-pressed="false">From slightly above</button>
+        </div>
+      </div>
+      <canvas id="strip" class="paper" style="height:48px"></canvas>
+      <canvas id="v3d" class="paper" style="height:250px" hidden></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <span class="lbl">Figure</span>
+        <select id="shape">
+          <option value="seg">Straight line (woman)</option>
+          <option value="iso" selected>Isosceles triangle (soldier, workman)</option>
+          <option value="sca">Scalene triangle</option>
+          <option value="3">Equilateral triangle</option>
+          <option value="4">Square</option>
+          <option value="5">Pentagon</option>
+          <option value="6">Hexagon</option>
+          <option value="12">Dodecagon</option>
+          <option value="30">30-gon</option>
+          <option value="0">Circle</option>
+          <option value="irr">Irregular pentagon</option>
+        </select>
+        <button id="play" aria-pressed="false">Turn</button>
+      </div>
+      <div class="note" id="info"></div>
+      <div class="row" id="apexRow"><span class="lbl">Apex angle</span><input type="range" id="apex" min="4" max="88" step="1" value="20"><span class="val" id="apexv">20°</span></div>
+      <div class="row"><span class="lbl">Rotation</span><input type="range" id="rot" min="0" max="360" step="0.5" value="0"><span class="val" id="rotv">0°</span></div>
+      <div class="row"><span class="lbl">Fog density</span><input type="range" id="fog" min="0.5" max="5" step="0.1" value="3"><span class="val" id="fogv">3.0</span></div>
+      <div class="row" id="elevRow" hidden><span class="lbl">Eye height</span><input type="range" id="elev" min="0" max="40" step="0.5" value="4"><span class="val" id="elevv">4°</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button id="it-top" role="tab" aria-selected="true" aria-controls="ip-top">From above</button>
+        <button id="it-prof" role="tab" aria-selected="false" aria-controls="ip-prof">Brightness</button>
+        <button id="it-trace" role="tab" aria-selected="false" aria-controls="ip-trace">Through a turn</button>
+      </div>
+      <div class="pane" id="ip-top" role="tabpanel">
+        <div class="cap">The large dot is you; the small grey dot marks the nearest point; ticks mark the left and right edges you see</div>
+        <canvas id="top" style="height:230px"></canvas>
+      </div>
+      <div class="pane" id="ip-prof" role="tabpanel" hidden>
+        <div class="cap">Brightness across your view: polygons give a bent line, a circle a smooth curve</div>
+        <canvas id="prof" style="height:160px"></canvas>
+      </div>
+      <div class="pane" id="ip-trace" role="tabpanel" hidden>
+        <div class="cap">Brightness of the nearest point through one full turn</div>
+        <canvas id="trace" style="height:110px"></canvas>
+        <div class="cap">Width of the line through one full turn (a circle's width = 100%)</div>
+        <canvas id="wtrace" style="height:110px"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section id="test" class="pane" role="tabpanel" aria-labelledby="tab-test" hidden>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <span>Question <span class="score" id="qn">1</span></span>
+        <span class="note">Correct <span class="score" id="score">0 / 0</span></span>
+      </div>
+      <canvas id="qstrip" class="paper" style="height:64px" role="img" aria-label="The stranger as a Flatlander sees them"></canvas>
+      <div class="row">
+        <button id="qplay" aria-pressed="true">Pause</button>
+        <span class="lbl">Fog density</span><input type="range" id="qfog" min="0.5" max="5" step="0.1" value="3"><span class="val" id="qfogv">3.0</span>
+      </div>
+      <label class="row note" style="gap:6px"><input type="checkbox" id="qhint"> Show the brightness curve (hint)</label>
+      <canvas id="qprof" style="height:120px" hidden></canvas>
+    </div>
+    <div class="panel">
+      <div class="note">What shape is this stranger?</div>
+      <div class="answers" id="answers"></div>
+      <div class="result" id="result" aria-live="polite"></div>
+      <canvas id="qtop" style="height:200px" hidden></canvas>
+      <div class="row"><button id="next" hidden>Next stranger →</button></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../../shared/geometry.js"></script>
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/slab3d.js"></script>
+<script>
+(function(){
+  const G=FlatlandGeometry,C=FlatlandCanvas;
+  const $=id=>document.getElementById(id);
+  const COLS=420,SPEED=1.2,ELEV_ANIM_MS=700;
+  const LABELS={seg:'Straight line',iso:'Isosceles triangle',sca:'Scalene triangle','3':'Equilateral triangle','4':'Square','5':'Pentagon','6':'Hexagon','8':'Octagon','12':'Dodecagon','30':'30-gon','0':'Circle',irr:'Irregular pentagon'};
+  const FIXED_SCA=[-90,10,130];
+  const FIXED_IRR=[[-90,1],[-20,0.82],[55,1],[150,0.9],[205,0.97]];
+  const reduceMotion=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
+  const CURVE_LABELS={bright:'near',dim:'far'};
+
+  const INFO={seg:'Two-fold rotational symmetry, two mirror lines: two cycles per turn, mirror-symmetric curves',iso:'No rotational symmetry, one mirror line: one cycle per turn, mirror-symmetric curves',sca:'No symmetry: one cycle per turn, lopsided curves',irr:'No symmetry: one cycle per turn, lopsided curves','0':'Looks the same at every angle'};
+  function info(kind){
+    if(INFO[kind])return INFO[kind];
+    const n=parseInt(kind,10);
+    return n+'-fold rotational symmetry, '+n+' mirror lines: brightness repeats '+n+' times per turn, width '+(n%2?2*n:n)+' times';
+  }
+
+  // Explore -----------------------------------------------------------------
+  const ex={theta:0,playing:false,mode:'1d',info:'top',cache:null,cacheKey:'',elevShown:0,anim:null};
+  let slab=null;
+  function spec(){return{kind:$('shape').value,apex:parseFloat($('apex').value),sca:FIXED_SCA,irr:FIXED_IRR};}
+
+  function drawExplore(){
+    const s=spec(),kind=s.kind,k=parseFloat($('fog').value);
+    $('apexRow').hidden=kind!=='iso';
+    $('elevRow').hidden=ex.mode!=='3d';
+    $('strip').hidden=ex.mode!=='1d';
+    $('v3d').hidden=ex.mode!=='3d';
+    $('viewCap').textContent=ex.mode==='1d'?'What a Flatlander sees: a single line, shaded by the fog':'A thin slab seen from slightly above: the sides are what a Flatlander sees; the top they never see';
+    $('apexv').textContent=$('apex').value+'°';$('elevv').textContent=$('elev').value+'°';
+    $('rotv').textContent=(Math.round(ex.theta*10)/10)+'°';$('fogv').textContent=k.toFixed(1);
+    $('info').textContent=info(kind);
+    const v=G.verts(s,ex.theta);
+    const prof=G.profile(kind,v,k,COLS);
+    if(ex.mode==='1d')C.drawInkStrip($('strip'),prof);
+    else{
+      if(!slab)slab=FlatlandSlab3D.create($('v3d'),{scheme:'ink'});
+      if(slab)slab.render(kind,v,k,ex.elevShown,C.token('--paper'),{fogColor:C.token('--fog')});
+    }
+    if(ex.info==='top')C.drawTop($('top'),kind,v,{extent:true,nearest:true});
+    if(ex.info==='prof')C.drawInkProfile($('prof'),prof,CURVE_LABELS);
+    if(ex.info==='trace'){
+      const key=kind+'|'+k+'|'+s.apex;
+      if(key!==ex.cacheKey){
+        ex.cache={b:[],w:[]};
+        for(let a=0;a<=360;a+=0.5){const vv=G.verts(s,a);ex.cache.b.push(G.bright(G.nearest(kind,vv).d,k));const e=G.extent(kind,vv);ex.cache.w.push((e[1]-e[0])/G.CIRCLE_WIDTH);}
+        ex.cacheKey=key;
+      }
+      C.drawTrace($('trace'),ex.cache.b,Math.exp(-k),1,C.token('--trace-b'),ex.theta);
+      C.drawTrace($('wtrace'),ex.cache.w,0,1,C.token('--trace-w'),ex.theta);
+    }
+  }
+
+  function setExPlaying(p){ex.playing=p;$('play').textContent=p?'Stop':'Turn';$('play').setAttribute('aria-pressed',String(p));}
+  function setMode(m){
+    if(m===ex.mode)return;
+    ex.mode=m;$('m1d').setAttribute('aria-pressed',String(m==='1d'));$('m3d').setAttribute('aria-pressed',String(m==='3d'));
+    const target=parseFloat($('elev').value);
+    if(m==='3d'&&!reduceMotion){ex.elevShown=0;ex.anim={start:performance.now(),target};}
+    else{ex.elevShown=target;ex.anim=null;}
+    drawExplore();
+  }
+  function setInfo(t){
+    ex.info=t;
+    ['top','prof','trace'].forEach(n=>{$('ip-'+n).hidden=n!==t;$('it-'+n).setAttribute('aria-selected',String(n===t));});
+    drawExplore();
+  }
+  function stepElevAnim(now){
+    if(!ex.anim)return false;
+    const p=Math.min(1,(now-ex.anim.start)/ELEV_ANIM_MS);
+    ex.elevShown=ex.anim.target*(1-Math.pow(1-p,3));
+    if(p>=1)ex.anim=null;
+    return true;
+  }
+
+  // Test --------------------------------------------------------------------
+  const QUIZ_KINDS=['seg','iso','sca','3','4','5','6','8','12','0','irr'];
+  const qz={theta:0,playing:true,cur:null,answered:false,right:0,total:0,qn:1,dir:1};
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+
+  // Scalene triangles avoid any two nearly equal angles so they cannot pass for isosceles.
+  function randomSpec(){
+    const kind=QUIZ_KINDS[Math.floor(Math.random()*QUIZ_KINDS.length)];
+    let s;
+    do{s=[-90,rnd(-40,60),rnd(100,200)];}
+    while(Math.min(s[1]+90,s[2]-s[1],270-s[2])<40||Math.abs((s[1]+90)-(270-s[2]))<15||Math.abs((s[2]-s[1])-(s[1]+90))<15||Math.abs((s[2]-s[1])-(270-s[2]))<15);
+    return{kind,apex:Math.round(rnd(8,40)),sca:s,irr:[[-90,1],[rnd(-35,-5),rnd(0.78,0.92)],[rnd(40,70),1],[rnd(135,165),rnd(0.85,0.95)],[rnd(195,225),rnd(0.9,1)]]};
+  }
+  function buildAnswers(){
+    const box=$('answers');box.textContent='';
+    QUIZ_KINDS.forEach(k=>{const b=document.createElement('button');b.textContent=LABELS[k];b.dataset.k=k;b.addEventListener('click',()=>answer(k,b));box.appendChild(b);});
+  }
+  function answer(k,btn){
+    if(qz.answered)return;
+    qz.answered=true;qz.total++;
+    const ok=k===qz.cur.kind;if(ok)qz.right++;
+    $('score').textContent=qz.right+' / '+qz.total;
+    const name=LABELS[qz.cur.kind].toLowerCase();
+    const withArticle=(/^[aeiou]/.test(name)?'an ':'a ')+name;
+    let txt=(ok?'Correct: ':'Not quite. It was ')+withArticle;
+    if(qz.cur.kind==='iso')txt+=' (apex '+qz.cur.apex+'°)';
+    $('result').textContent=txt+'.';
+    [...$('answers').children].forEach(b=>{b.disabled=true;if(b.dataset.k===qz.cur.kind)b.classList.add('ok');else if(b===btn)b.classList.add('bad');});
+    $('qtop').hidden=false;$('next').hidden=false;
+    drawTest();
+  }
+  function nextQ(){
+    if(qz.cur)qz.qn++;
+    qz.cur=randomSpec();qz.theta=rnd(0,360);qz.dir=Math.random()<0.5?1:-1;qz.answered=false;
+    $('qn').textContent=qz.qn;$('result').textContent='';
+    buildAnswers();$('qtop').hidden=true;$('next').hidden=true;
+    drawTest();
+  }
+  function drawTest(){
+    const k=parseFloat($('qfog').value);$('qfogv').textContent=k.toFixed(1);
+    const kind=qz.cur.kind,v=G.verts(qz.cur,qz.theta);
+    const prof=G.profile(kind,v,k,COLS);
+    C.drawInkStrip($('qstrip'),prof);
+    $('qprof').hidden=!$('qhint').checked;
+    if($('qhint').checked)C.drawInkProfile($('qprof'),prof,CURVE_LABELS);
+    if(qz.answered)C.drawTop($('qtop'),kind,v,{extent:false,nearest:false});
+  }
+  function setQPlaying(p){qz.playing=p;$('qplay').textContent=p?'Pause':'Turn';$('qplay').setAttribute('aria-pressed',String(p));}
+
+  // Shell -------------------------------------------------------------------
+  let tab='explore';
+  function showTab(t){
+    tab=t;
+    $('explore').hidden=t!=='explore';$('test').hidden=t!=='test';
+    $('tab-explore').setAttribute('aria-selected',String(t==='explore'));$('tab-test').setAttribute('aria-selected',String(t==='test'));
+    redraw();
+  }
+  function redraw(){if(tab==='explore')drawExplore();else drawTest();}
+
+  $('tab-explore').addEventListener('click',()=>showTab('explore'));
+  $('tab-test').addEventListener('click',()=>showTab('test'));
+  $('play').addEventListener('click',()=>setExPlaying(!ex.playing));
+  $('m1d').addEventListener('click',()=>setMode('1d'));
+  $('m3d').addEventListener('click',()=>setMode('3d'));
+  ['top','prof','trace'].forEach(n=>$('it-'+n).addEventListener('click',()=>setInfo(n)));
+  $('rot').addEventListener('input',e=>{ex.theta=parseFloat(e.target.value);drawExplore();});
+  ['fog','apex'].forEach(id=>$(id).addEventListener('input',drawExplore));
+  $('elev').addEventListener('input',e=>{ex.anim=null;ex.elevShown=parseFloat(e.target.value);drawExplore();});
+  $('shape').addEventListener('change',drawExplore);
+  $('qplay').addEventListener('click',()=>setQPlaying(!qz.playing));
+  $('qfog').addEventListener('input',drawTest);
+  $('qhint').addEventListener('change',drawTest);
+  $('next').addEventListener('click',nextQ);
+  window.addEventListener('resize',redraw);
+  try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redraw);}catch(e){}
+  new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+  function tick(now){
+    if(tab==='explore'){
+      const animating=stepElevAnim(now);
+      if(ex.playing){ex.theta=(ex.theta+SPEED)%360;$('rot').value=ex.theta;}
+      if(ex.playing||animating)drawExplore();
+    }
+    if(tab==='test'&&qz.playing&&qz.cur){qz.theta=(qz.theta+SPEED*qz.dir+360)%360;drawTest();}
+    requestAnimationFrame(tick);
+  }
+
+  nextQ();
+  showTab(location.hash==='#test'?'test':'explore');
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

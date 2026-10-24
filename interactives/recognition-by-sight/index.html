@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recognition by Sight · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.who{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:0.04em}
+.who strong{font-weight:500;color:var(--fg)}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.more{font-size:14px}
+.embedded .head{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <h1>Recognition by sight</h1>
+    <p>A Merchant and a Physician walk toward you out of the fog, then one of your hexagonal grandsons. In Flatland you see only a line, but how fast that line fades toward its ends tells you who is coming.</p>
+  </header>
+
+  <div class="panel">
+    <div class="stage" id="stage">
+      <div class="who"><span id="who"><strong>Merchant</strong> · equilateral triangle</span><span id="phase" aria-hidden="true"></span></div>
+      <div class="label">From above</div>
+      <canvas id="top" class="paper" style="height:200px" aria-hidden="true"></canvas>
+      <div class="label">What you see</div>
+      <canvas id="strip" class="paper" style="height:40px" role="img" aria-label="The line a Flatlander sees, bright where the figure is near and fading into fog where it is far"></canvas>
+      <div id="ghostRow" class="stage" hidden>
+        <div class="label">The Merchant, for comparison</div>
+        <canvas id="ghost" class="paper" style="height:40px" aria-hidden="true"></canvas>
+      </div>
+    </div>
+    <div class="foot">
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <button id="toggle" aria-pressed="false">Play</button>
+    </div>
+  </div>
+
+  <p class="more"><a href="../recognition-game/index.html" target="_top">Try it yourself: turn any figure in the fog, then test your eye →</a></p>
+</main>
+
+<script src="../../shared/geometry.js"></script>
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const G=FlatlandGeometry,C=FlatlandCanvas;
+  const $=id=>document.getElementById(id);
+  const FOG=2.2,START=2.6,COLS=360;
+  const ease=p=>p<0.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+
+  // Each figure walks in from the fog, then holds while the caption explains what the line shows.
+  const FIGURES={
+    merchant:{kind:'3',theta:0,name:'Merchant',form:'equilateral triangle'},
+    physician:{kind:'5',theta:0,name:'Physician',form:'pentagon'},
+    grandson:{kind:'6',theta:30,name:'Grandson',form:'hexagon, side first'}
+  };
+  const ALL_PHASES=[
+    {fig:'merchant',ms:3600,walk:true,caption:'A Merchant approaches, angle first.'},
+    {fig:'merchant',ms:2800,caption:'Its sides recede rapidly into the fog, so the line dims fast on either side of the bright point.'},
+    {fig:'physician',ms:3600,walk:true,caption:'Now a Physician, also angle first.',ghost:true},
+    {fig:'physician',ms:3200,caption:'Its sides recede less rapidly: the line fades more gently, and its ends are not so dim.',ghost:true},
+    {fig:'grandson',ms:3600,walk:true,caption:'A hexagonal grandson turns one whole side toward you.'},
+    {fig:'grandson',ms:3200,caption:'One side shows in near-even brightness; two shorter lines on either side dim toward the ends.'}
+  ];
+  // ?scene=merchant|physician|grandson plays one figure, so each can sit beside its own paragraph.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const PHASES=FIGURES[scene]?ALL_PHASES.filter(p=>p.fig===scene):ALL_PHASES;
+  const DURATION=PHASES.reduce((s,p)=>s+p.ms,0);
+  const ORDER=['merchant','physician','grandson'];
+  $('phase').hidden=!!FIGURES[scene];
+  document.querySelector('.more').hidden=!!FIGURES[scene]&&scene!=='grandson';
+  const reduceMotion=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
+
+  function placed(fig,s){return G.verts({kind:fig.kind},fig.theta).map(([x,y])=>[x,y+s]);}
+  const merchantProfile=G.profile('3',placed(FIGURES.merchant,0),FOG,COLS);
+
+  let status='ready',clock=0,last=null,shownCaption=null;
+
+  function frameAt(t){
+    let i=0;while(i<PHASES.length-1&&t>=PHASES[i].ms){t-=PHASES[i].ms;i++;}
+    const ph=PHASES[i],p=Math.min(1,t/ph.ms);
+    return{phase:ph,index:i,fig:FIGURES[ph.fig],s:ph.walk?START*(1-ease(p)):0};
+  }
+
+  function drawTop(fig,v){
+    const[g,w,h]=C.setup($('top'));
+    const yMin=-G.D-0.35,yMax=START+G.R+0.25,sc=h/(yMax-yMin),cx=w/2;
+    const toS=([x,y])=>[cx+x*sc,h-(y-yMin)*sc];
+    const O=toS([0,-G.D]);
+    g.strokeStyle=C.token('--paper-grid');g.lineWidth=1;g.beginPath();
+    for(let y=Math.ceil(yMin);y<=yMax;y++){const a=toS([0,y]);g.moveTo(0,a[1]);g.lineTo(w,a[1]);}
+    for(let x=-Math.floor(cx/sc);x<=cx/sc;x++){const a=toS([x,0]);g.moveTo(a[0],0);g.lineTo(a[0],h);}
+    g.stroke();
+    g.setLineDash([4,4]);g.strokeStyle=C.token('--line-strong');
+    [-G.FIELD_HALF,G.FIELD_HALF].forEach(a=>{const L=yMax-yMin;const e=toS([Math.sin(a)*L,-G.D+Math.cos(a)*L]);g.beginPath();g.moveTo(O[0],O[1]);g.lineTo(e[0],e[1]);g.stroke();});
+    g.setLineDash([]);
+    g.fillStyle=C.token('--paper-2');g.strokeStyle=C.token('--ink');g.lineWidth=1.5;g.beginPath();
+    v.forEach((p,i)=>{const q=toS(p);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]);});g.closePath();g.fill();g.stroke();
+    g.fillStyle=C.token('--ink');g.beginPath();g.arc(O[0],O[1],5,0,2*Math.PI);g.fill();
+  }
+
+  function draw(){
+    const f=frameAt(Math.min(clock,DURATION));
+    const v=placed(f.fig,f.s);
+    const prof=G.profile(f.fig.kind,v,FOG,COLS);
+    $('who').innerHTML='<strong>'+f.fig.name+'</strong> · '+f.fig.form;
+    $('phase').textContent=ORDER.indexOf(f.phase.fig)+1+' / 3';
+    if(f.phase.caption!==shownCaption){$('caption').textContent=f.phase.caption;shownCaption=f.phase.caption;}
+    drawTop(f.fig,v);
+    C.drawInkStrip($('strip'),prof,1-f.s/START);
+    $('ghostRow').hidden=!f.phase.ghost;
+    if(f.phase.ghost)C.drawInkStrip($('ghost'),merchantProfile);
+  }
+
+  const LABELS={ready:'Play',playing:'Pause',paused:'Resume',done:'Replay'};
+  function setStatus(s){status=s;last=null;$('toggle').textContent=LABELS[s];$('toggle').setAttribute('aria-pressed',String(s==='playing'));}
+  function press(){
+    if(status==='playing')setStatus('paused');
+    else if(status==='done'){clock=0;setStatus('playing');}
+    else setStatus('playing');
+  }
+
+  function tick(now){
+    if(status==='playing'){
+      if(last!==null)clock+=Math.min(now-last,100);
+      last=now;
+      if(clock>=DURATION){clock=DURATION;setStatus('done');}
+      draw();
+    }
+    requestAnimationFrame(tick);
+  }
+
+  $('toggle').addEventListener('click',press);
+  $('stage').addEventListener('click',press);
+  window.addEventListener('resize',draw);
+  try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
+  new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+  // ?t=<ms> opens on a fixed moment (for screenshots and links). Otherwise play once,
+  // the first time the stage is fully on screen, unless the reader prefers reduced motion.
+  const startAt=parseFloat(new URLSearchParams(location.search).get('t'));
+  if(!isNaN(startAt)){
+    clock=Math.max(0,Math.min(DURATION,startAt));
+    setStatus(clock>=DURATION?'done':'paused');
+  }else if(!reduceMotion){
+    if('IntersectionObserver' in window){
+      const io=new IntersectionObserver(entries=>{
+        if(status!=='ready'||!entries.some(e=>e.intersectionRatio>=0.95))return;
+        io.disconnect();
+        setStatus('playing');
+      },{threshold:[0.95]});
+      io.observe($('stage'));
+    }else{
+      setStatus('playing');
+    }
+  }
+  draw();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
