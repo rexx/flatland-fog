@@ -52,8 +52,8 @@ Standard Ebooks 版共 10 張，已重繪為 SVG，放在 `illustrations/`。
 | §7 | 不規則圖形 | 併入辨認遊戲 | P3 | — |
 | §8–10 | 顏色、Colour Bill、鎮壓；全站第一次出現彩色 | **colour-bill**：塗色後辨認變得太容易 | P2 | — |
 | §13 | 直線國，國王只看得到一個點 | **lineland** | P2 | — |
-| §14–17 | 正方形先生穿過直線國；球體在平面國看起來是忽大忽小的圓 | **sphere-visit** / **passing-through**：截面動畫 | P1 | — |
-| §18 | 從空間國俯視平面國，房屋內部一覽無遺 | **view-from-above** | P1 | — |
+| §14、§16 | 正方形先生走出直線國；球體升出平面國，截面縮成一點後消失 | **passing-through**：兩段截面動畫，`?scene=lineland` 嵌在 §14、`?scene=sphere` 嵌在 §16 | P1 | 完成 |
+| §18 | 從空間國俯視平面國，房屋內部一覽無遺 | **view-from-above**：視角從平面升到上方，屋內家人逐一現形，最後拉遠看到整座城市 | P1 | 完成 |
 | §19 | 點→線→正方形→立方體，再推到四維 | **dimension-ladder** | P2 | — |
 | §20 | 點國 | **pointland** | P3 | — |
 | 其他節 | — | 只放正文 | — | — |
@@ -65,6 +65,7 @@ Standard Ebooks 版共 10 張，已重繪為 SVG，放在 `illustrations/`。
 | `theme.css` | 灰階配色、字型、按鈕與面板樣式；深色與淺色兩套 |
 | `reader.css`、`reader.js` | 閱讀頁與目錄頁樣式；依互動元件回報的高度調整嵌入框 |
 | `embed.js` | 互動元件在嵌入框內時隱藏標題，並回報自己的高度 |
+| `player.js` | 動畫的播放控制：第一次完整進入畫面時自動播放一次、按鈕暫停與重播、`?t=` 停在指定時間點 |
 | `geometry.js` | 圖形頂點、射線與邊的交點、最近點、視角寬度、霧中亮度 |
 | `canvas.js` | 一維霧中畫面、亮度曲線、俯視圖、旋轉曲線的 2D 繪圖 |
 | `slab3d.js` | 把平面圖形做成薄片的 3D 視圖，含 `ink`（黑白）與 `colour` 兩種配色 |
@@ -74,6 +75,6 @@ Standard Ebooks 版共 10 張，已重繪為 SVG，放在 `illustrations/`。
 | 階段 | 內容 | 狀態 |
 |---|---|---|
 | M1 骨架 | 23 頁閱讀頁與目錄頁、插圖、共用模組、§1 與 §6 互動元件、辨認遊戲（英文、灰階）；推上 GitHub 並開 Pages | 完成 |
-| M2 第一批元件 | sphere-visit 與 passing-through（§14–17）、view-from-above（§18） | — |
+| M2 第一批元件 | passing-through（§14、§16）、view-from-above（§18） | 完成 |
 | M3 第二批元件 | P2 元件，依興趣挑選 | — |
 | M4 收尾 | P3 元件、手機版面檢查、README 截圖 | — |

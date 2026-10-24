@@ -41,6 +41,17 @@ EMBEDS = {
         {"after": "text:contemplating one of his sides", "slug": "recognition-by-sight",
          "query": "scene=grandson", "title": "A hexagonal grandson"},
     ],
+    14: [
+        {"after": "illustration-7", "slug": "passing-through", "query": "scene=lineland",
+         "title": "The Square leaves Lineland"},
+    ],
+    16: [
+        {"after": "text:he diminished and finally vanished", "slug": "passing-through", "query": "scene=sphere",
+         "title": "The Sphere rises out of Flatland"},
+    ],
+    18: [
+        {"after": "text:the secrets of the earth", "slug": "view-from-above", "title": "The view from above"},
+    ],
 }
 
 KEEP_ATTRS = {"id", "href", "src", "alt", "title", "lang"}

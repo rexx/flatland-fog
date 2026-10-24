@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Passing Through · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.scenes{display:flex;flex-direction:column;gap:24px}
+.embedded .head,.embedded .panel h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <h1>Passing through</h1>
+    <p>A world can hold only a slice of a visitor from the next dimension up. The Square steps out of Lineland, and the Sphere rises out of Flatland.</p>
+  </header>
+
+  <div class="scenes">
+    <section class="panel" id="lineland">
+      <h2>The Square leaves Lineland</h2>
+      <div class="stage">
+        <div class="label">From above</div>
+        <canvas class="paper view" style="height:clamp(130px,30vw,200px)" role="img" aria-label="A square straddling a straight line moves sideways off the line; the part of it lying on the line stays the same length until it vanishes at once"></canvas>
+        <div class="label">Lineland itself: everything on the Line</div>
+        <canvas class="paper strip" style="height:28px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="sphere">
+      <h2>The Sphere rises out of Flatland</h2>
+      <div class="stage">
+        <div class="label">From the side, in Spaceland</div>
+        <canvas class="paper view" style="height:clamp(200px,52vw,240px)" role="img" aria-label="A sphere rises through a plane; the circle where they meet shrinks to a point and vanishes, then grows again as the sphere returns"></canvas>
+        <div class="label">What the Square sees</div>
+        <canvas class="paper strip" style="height:40px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../../shared/geometry.js"></script>
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const G=FlatlandGeometry,C=FlatlandCanvas,P=FlatlandPlayer;
+  const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+
+  // ?scene=lineland|sphere shows one scene, so each can sit beside its own paragraph.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const SCENES={lineland:setupLineland,sphere:setupSphere};
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
+    SCENES[id](el);
+  });
+
+  function bind(el,phases,draw){
+    const caption=el.querySelector('.caption');let shown=null;
+    P.create({
+      duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('button'),
+      draw:t=>{const text=draw(P.phaseAt(phases,t));if(text!==shown){caption.textContent=text;shown=text;}}
+    });
+  }
+
+  // The Square (side S) straddles the Line, moves off it sideways, waits, and steps back in.
+  // While any part of him is on the Line, the slice there is a full side long.
+  function setupLineland(el){
+    const S=0.8,OUT=1.15;
+    const FOLK=[[-3.7,-3.25],[-2.75,-2.4],[-1.75,-1.35],[1.0,2.45],[2.8,3.15]];
+    const WOMEN=[-2.05,3.55];
+    const KING=3;
+    const PHASES=[
+      {ms:2200,text:'Lineland is a single Line. Only a slice of the Square lies on it.'},
+      {ms:3800,rise:true},
+      {ms:2600,text:'Out of the Line, he can see all of it: every Linelander, end to end.'},
+      {ms:2600,fall:true,text:'He steps back in, and the slice is there again at full length, all at once.'},
+      {ms:900,text:'He steps back in, and the slice is there again at full length, all at once.'}
+    ];
+    const view=el.querySelector('.view'),strip=el.querySelector('.strip');
+
+    function layout(w,h){const sc=Math.min(w/8.4,h/2.3);return{sc,cx:w/2,ly:h-0.6*sc};}
+
+    function draw(f){
+      let y=0;
+      if(f.index===1)y=OUT*P.ease(f.p);
+      else if(f.index===2)y=OUT;
+      else if(f.index===3)y=OUT*(1-P.ease(f.p));
+      const on=y-S/2<1e-6;
+
+      const[g,w,h]=C.setup(view);const L=layout(w,h);
+      const X=x=>L.cx+x*L.sc;
+      g.strokeStyle=C.token('--ink');g.lineWidth=1;g.beginPath();g.moveTo(0,L.ly);g.lineTo(w,L.ly);g.stroke();
+      g.fillStyle=C.token('--muted');g.font=MONO;g.fillText('Lineland',8,L.ly+16);
+      g.strokeStyle=C.token('--muted');g.fillStyle=C.token('--muted');g.lineWidth=6;g.lineCap='butt';
+      FOLK.forEach(([a,b])=>{g.beginPath();g.moveTo(X(a),L.ly);g.lineTo(X(b),L.ly);g.stroke();});
+      WOMEN.forEach(x=>{g.beginPath();g.arc(X(x),L.ly,3.5,0,2*Math.PI);g.fill();});
+      g.fillStyle=C.token('--muted');g.fillText('the King',X((FOLK[KING][0]+FOLK[KING][1])/2)-26,L.ly-10);
+      const top=L.ly-(y+S/2)*L.sc;
+      g.fillStyle=C.token('--paper-2');g.strokeStyle=C.token('--ink');g.lineWidth=1.5;
+      g.fillRect(X(-S/2),top,S*L.sc,S*L.sc);g.strokeRect(X(-S/2),top,S*L.sc,S*L.sc);
+      if(on){g.lineWidth=5;g.beginPath();g.moveTo(X(-S/2),L.ly);g.lineTo(X(S/2),L.ly);g.stroke();}
+
+      const[s,sw,sh]=C.setup(strip);
+      s.fillStyle=C.token('--paper');s.fillRect(0,0,sw,sh);
+      s.fillStyle=C.token('--muted');
+      FOLK.forEach(([a,b])=>s.fillRect(X(a),0,(b-a)*L.sc,sh));
+      WOMEN.forEach(x=>s.fillRect(X(x)-1.5,0,3,sh));
+      if(on){s.fillStyle=C.token('--ink');s.fillRect(X(-S/2),0,S*L.sc,sh);}
+
+      if(f.phase.rise)return on?'“I see you, I see you still; you are not moving.”':'“She is vanished; she is dead.”';
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // The Sphere (radius 1) rises until it clears the plane, waits, and sinks back.
+  // Its section is a circle of radius sqrt(1 - h^2), seen by the Square as a line.
+  function setupSphere(el){
+    const TOP=1.3,FOG=1.2,COLS=360;
+    const CIRCLE=G.verts({kind:'96'},0);
+    const PHASES=[
+      {ms:1800,text:'The plane cuts the Sphere through his middle: to the Square, a Circle of full size.'},
+      {ms:4200,rise:true},
+      {ms:1800,text:'“Am I quite gone? Are you convinced now?”'},
+      {ms:4200,fall:true,text:'“Now I will gradually return to Flatland.”'},
+      {ms:1000,text:'The section grows back to its full size.'}
+    ];
+    const view=el.querySelector('.view'),strip=el.querySelector('.strip');
+
+    function draw(f){
+      let hgt=0;
+      if(f.index===1)hgt=TOP*P.ease(f.p);
+      else if(f.index===2)hgt=TOP;
+      else if(f.index===3)hgt=TOP*(1-P.ease(f.p));
+      const r=Math.sqrt(Math.max(0,1-hgt*hgt));
+
+      const[g,w,h]=C.setup(view);
+      const sc=Math.min(h/(TOP+2.4),w/6.2),y0=h-1.1*sc,cx=w*0.42;
+      const ink=C.token('--ink');
+      g.strokeStyle=ink;g.lineWidth=1;g.beginPath();g.moveTo(0,y0);g.lineTo(w,y0);g.stroke();
+      g.fillStyle=C.token('--muted');g.font=MONO;g.fillText('Flatland',8,y0+16);
+      const ex=w-28;
+      g.lineWidth=4;g.beginPath();g.moveTo(ex-0.45*sc,y0);g.lineTo(ex,y0);g.stroke();
+      g.textAlign='right';g.fillText('the Square',ex,y0+16);g.textAlign='left';
+      g.lineWidth=1.5;g.beginPath();g.arc(cx,y0-hgt*sc,sc,0,2*Math.PI);g.stroke();
+      if(r>0){
+        const rx=r*sc,ry=rx*0.2;
+        g.fillStyle=C.token('--paper-2');g.beginPath();g.ellipse(cx,y0,rx,ry,0,0,2*Math.PI);g.fill();
+        g.strokeStyle=ink;g.lineWidth=1.5;
+        g.setLineDash([4,3]);g.beginPath();g.ellipse(cx,y0,rx,ry,0,Math.PI,2*Math.PI);g.stroke();
+        g.setLineDash([]);g.beginPath();g.ellipse(cx,y0,rx,ry,0,0,Math.PI);g.stroke();
+      }
+
+      const prof=r>1e-3?G.profile('96',CIRCLE.map(([x,y])=>[x*r,y*r]),FOG,COLS):new Array(COLS).fill(null);
+      C.drawInkStrip(strip,prof);
+
+      if(f.phase.rise)return r>0?'“As I rise in Space, so my sections become smaller.”':'He dwindles to a point, and vanishes.';
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+})();
+</script>
+</body>
+</html>

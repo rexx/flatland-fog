@@ -22,7 +22,7 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | `read/` | One page per section: preface plus sections I to XXII |
 | `interactives/` | One folder per interactive; each works on its own page and embedded in a reading page |
 | `illustrations/` | The ten plates from the book, as SVG |
-| `shared/` | Theme, geometry, canvas drawing and the 3D slab renderer shared by every interactive |
+| `shared/` | Theme, geometry, canvas drawing, the 3D slab renderer and the play-once animation player shared by the interactives |
 | `tools/import_text.py` | Regenerates `read/` and `index.html` from the Standard Ebooks source |
 | `docs/PLAN.md` | Plan: which section gets which interactive, and the milestones |
 
@@ -33,6 +33,8 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | I | Lower your eye to the table (`coin-on-table`) | Done |
 | VI | Recognition by sight (`recognition-by-sight`): the Merchant, the Physician and a hexagonal grandson walk out of the fog | Done |
 | VI | The recognition game (`recognition-game`): turn any figure in the fog, then test your eye; linked from the Section VI animation | Done |
+| XIV, XVI | Passing through (`passing-through`): the Square steps out of Lineland, and the Sphere rises out of Flatland | Done |
+| XVIII | The view from above (`view-from-above`): rise out of the plane and see into the Square's house, then the whole city | Done |
 
 ## Regenerating the text
 

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>View from Above · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.stage{position:relative;cursor:pointer}
+.stage canvas{height:clamp(240px,64vw,360px);display:block;width:100%}
+.stage .labels{position:absolute;inset:0;background:none;border-color:transparent;pointer-events:none}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.embedded .head{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <h1>The view from above</h1>
+    <p>From inside Flatland a house is only its outer wall. Lifted into Space, the Square looks down on his own house and sees every room, and everyone in it, laid open.</p>
+  </header>
+
+  <div class="panel">
+    <div class="stage">
+      <canvas id="view" class="paper" role="img" aria-label="Animation: a pentagonal house seen edge-on as a single line in the fog, then from higher and higher above until its rooms and inhabitants are visible, then the whole city"></canvas>
+      <canvas id="labels" class="paper labels" aria-hidden="true"></canvas>
+    </div>
+    <div class="foot">
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <button id="toggle" aria-pressed="false">Play</button>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../../shared/geometry.js"></script>
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const G=FlatlandGeometry,C=FlatlandCanvas,P=FlatlandPlayer;
+  const $=id=>document.getElementById(id);
+  const THICK=0.035,WALL=0.024,FOG=2.4,NEAR_DIST=3.4,FAR_DIST=13,SPACING=2.7;
+  const EYE=0.3,HIGH=68,HIGHEST=78,HOME=1.5,CITY=24;
+
+  const PHASES=[
+    {ms:2000,caption:'From inside Flatland, a house is a line: its outer wall, fading into the fog.'},
+    {ms:5400,caption:'Lifted out of the plane, the Square looks down on his own house.'},
+    {ms:4200,caption:'Every room lies open: his sons asleep, his grandsons to the South, his wife roving in the Hall.'},
+    {ms:4800,caption:'“The further we receded from the object we beheld, the larger became the field of vision.”'},
+    {ms:1400,caption:'“The further we receded from the object we beheld, the larger became the field of vision.”'}
+  ];
+
+  // ---- Floor plan, after the book's map of the house (illustration 9). North is +y.
+  // The pentagon has circumradius 1 with its apex to the North; the Men's door is on the
+  // West side and the Women's door on the East.
+  const V={A:[0,1],B:[-0.951,0.309],C:[-0.588,-0.809],D:[0.588,-0.809],E:[0.951,0.309]};
+  const lerp=(P,Q,t)=>[P[0]+(Q[0]-P[0])*t,P[1]+(Q[1]-P[1])*t];
+  const eastX=y=>y>=V.E[1]?V.E[0]*(1-y)/(1-V.E[1]):V.E[0]+(V.D[0]-V.E[0])*(V.E[1]-y)/(V.E[1]-V.D[1]);
+  const westX=y=>V.B[0]+(V.C[0]-V.B[0])*(V.B[1]-y)/(V.B[1]-V.C[1]);
+  const NW_IN=[0.588,-0.809];
+
+  // Each wall is [from, to, gaps], with gaps as [t0, t1] fractions along it.
+  const vy=y=>(0.891-y)/1.341;
+  const WALLS=[
+    [V.A,V.B,[]],[V.B,V.C,[[0.18,0.34]]],[V.C,V.D,[]],[V.D,V.E,[[0.74,0.86]]],[V.E,V.A,[]],
+    [[0.15,0.891],[0.15,-0.45],[[vy(0.70),vy(0.62)],[vy(0.38),vy(0.30)],[vy(0.13),vy(0.05)],[vy(-0.05),vy(-0.11)],[vy(-0.25),vy(-0.33)]]],
+    [[0.15,0.5],[eastX(0.5),0.5],[]],
+    [[0.15,0.18],[eastX(0.18),0.18],[]],
+    [[0.15,0],[eastX(0),0],[]],
+    [[0.15,-0.15],[eastX(-0.15),-0.15],[]],
+    [[0,-0.45],[eastX(-0.45),-0.45],[[0.04,0.15]]],
+    [[0,-0.45],[0,-0.809],[]],
+    [[westX(-0.55),-0.55],[0,-0.55],[[0.22,0.34],[0.70,0.82]]],
+    [[-0.30,-0.55],[-0.30,-0.809],[]]
+  ];
+  [0.08,0.30,0.52,0.74,0.96].forEach(t=>{const p=lerp(V.B,V.A,t);WALLS.push([p,[p[0]+0.2*NW_IN[0],p[1]+0.2*NW_IN[1]],[]]);});
+
+  const at=(spec,r,cx,cy,th)=>G.verts(spec,th||0).map(([x,y])=>[cx+x*r,cy+y*r]);
+  const rect=(x0,y0,x1,y1)=>[[x0,y0],[x1,y0],[x1,y1],[x0,y1]];
+  const bar=(cx,cy,len,ang)=>{const a=ang*G.RAD,dx=Math.cos(a)*len/2,dy=Math.sin(a)*len/2,nx=-Math.sin(a)*0.012,ny=Math.cos(a)*0.012;
+    return[[cx-dx+nx,cy-dy+ny],[cx+dx+nx,cy+dy+ny],[cx+dx-nx,cy+dy-ny],[cx-dx-nx,cy-dy-ny]];};
+  const SONS=[0.19,0.41,0.63,0.85].map(t=>{const p=lerp(V.B,V.A,t);return[p[0]+0.1*NW_IN[0],p[1]+0.1*NW_IN[1]];});
+  const FIGURES=[
+    ...SONS.map(([x,y])=>at({kind:'5'},0.065,x,y,180)),
+    at({kind:'6'},0.075,-0.47,-0.69),at({kind:'6'},0.075,-0.15,-0.69),
+    ...[0.30,0.45,0.60].map(x=>at({kind:'iso',apex:12},0.075,x,-0.30,180)),
+    bar(0.45,-0.075,0.16,0),
+    at({kind:'iso',apex:14},0.055,0.27,0.64,180),
+    rect(0.20,0.71,0.32,0.75),rect(0.38,0.54,0.43,0.59),rect(0.46,0.54,0.51,0.59)
+  ];
+  const LABELS=[
+    {text:'my sons',at:(()=>{const p=lerp(V.B,V.A,0.52);return[p[0]+0.36*NW_IN[0],p[1]+0.36*NW_IN[1]];})()},
+    {text:'my grandsons',at:[-0.31,-0.47]},
+    {text:'the Page',at:[0.62,0.86],align:'left'},
+    {text:'my daughter',at:[0.98,-0.11],align:'left'},
+    {text:'the servants',at:[0.88,-0.34],align:'left'},
+    {text:'the Hall',at:[-0.40,-0.27]},
+    {text:'my wife',wife:true,align:'right'}
+  ];
+  // The wife walks up and down the Hall, waiting for her husband.
+  function wifeAt(clock){
+    const s=0.5-0.5*Math.cos(2*Math.PI*clock/5200);
+    const P0=[-0.05,0.22],P1=[-0.05,-0.10];
+    return{p:lerp(P0,P1,s),ang:Math.atan2(P1[1]-P0[1],P1[0]-P0[0])/G.RAD};
+  }
+
+  function wallQuads(){
+    const out=[];
+    WALLS.forEach(([P0,Q0,gaps])=>{
+      const L=Math.hypot(Q0[0]-P0[0],Q0[1]-P0[1]),ext=WALL/2/L;
+      const P=lerp(P0,Q0,-ext),Q=lerp(P0,Q0,1+ext);
+      let runs=[[0,1]];
+      gaps.forEach(([a,b])=>{const ta=(a+ext)/(1+2*ext),tb=(b+ext)/(1+2*ext);runs=runs.flatMap(([s,e])=>{const r=[];if(ta>s)r.push([s,Math.min(e,ta)]);if(tb<e)r.push([Math.max(s,tb),e]);return r;});});
+      const d=[Q[0]-P[0],Q[1]-P[1]],n=[-d[1]/Math.hypot(...d)*WALL/2,d[0]/Math.hypot(...d)*WALL/2];
+      runs.forEach(([s,e])=>{const a=lerp(P,Q,s),b=lerp(P,Q,e);out.push([[a[0]+n[0],a[1]+n[1]],[b[0]+n[0],b[1]+n[1]],[b[0]-n[0],b[1]-n[1]],[a[0]-n[0],a[1]-n[1]]]);});
+    });
+    return out;
+  }
+
+  // ---- three.js scene
+  if(typeof THREE==='undefined'){
+    const[g]=C.setup($('view'));g.fillStyle=C.token('--muted');g.font='13px sans-serif';g.fillText('3D view unavailable: three.js did not load.',12,24);
+    return;
+  }
+  const renderer=new THREE.WebGLRenderer({canvas:$('view'),antialias:true});
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(30,2,0.02,80);
+
+  // Every surface fades with in-plane distance from the eye, as in the 1D view.
+  const VERTEX='varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}';
+  // Beyond the reveal radius everything melts into the paper, so the neighbouring houses
+  // come into view only as the Square rises higher.
+  const FRAGMENT='uniform vec3 col;uniform vec3 bg;uniform vec3 paper;uniform float k;uniform vec2 eye;uniform float near;uniform float reveal;varying vec3 vW;'+
+    'void main(){float d=length(vW.xz-eye);float b=clamp(exp(-k*(d-near)),0.0,1.0);'+
+    'float m=1.0-smoothstep(reveal-0.5,reveal,length(vW.xz));gl_FragColor=vec4(mix(paper,mix(bg,col,b),m),1.0);}';
+  const shared={bg:{value:new THREE.Color()},paper:{value:new THREE.Color()},k:{value:0},eye:{value:new THREE.Vector2()},near:{value:0},reveal:{value:0}};
+  const mat=(token,offset)=>{
+    const m=new THREE.ShaderMaterial({uniforms:Object.assign({col:{value:new THREE.Color()}},shared),vertexShader:VERTEX,fragmentShader:FRAGMENT,polygonOffset:offset,polygonOffsetFactor:1,polygonOffsetUnits:1});
+    m.userData.token=token;return m;
+  };
+  const MATS={top:mat('--paper-2',true),side:mat('--ink',true),wall:mat('--ink',false),edge:mat('--ink',false)};
+
+  // Extrudes plane polygons into slabs once, then copies them to every lot (plane offset),
+  // merged into one mesh (caps, sides) plus edge lines.
+  function slabs(polys,offsets){
+    const caps=[],sides=[],edges=[];
+    polys.forEach(poly=>{
+      const geo=new THREE.ExtrudeGeometry(new THREE.Shape(poly.map(([x,y])=>new THREE.Vector2(x,y))),{depth:THICK,bevelEnabled:false,curveSegments:1});
+      geo.rotateX(-Math.PI/2);
+      const pos=geo.attributes.position.array;
+      geo.groups.forEach(gr=>{const dst=gr.materialIndex===0?caps:sides;for(let i=gr.start*3;i<(gr.start+gr.count)*3;i++)dst.push(pos[i]);});
+      const eg=new THREE.EdgesGeometry(geo,20);edges.push(...eg.attributes.position.array);eg.dispose();geo.dispose();
+    });
+    const copy=src=>{
+      const out=new Float32Array(src.length*offsets.length);
+      offsets.forEach(([ox,oy],n)=>{for(let i=0;i<src.length;i+=3){const j=n*src.length+i;out[j]=src[i]+ox;out[j+1]=src[i+1];out[j+2]=src[i+2]-oy;}});
+      return out;
+    };
+    const c=copy(caps),sd=copy(sides),all=new Float32Array(c.length+sd.length);all.set(c);all.set(sd,c.length);
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.BufferAttribute(all,3));
+    g.addGroup(0,c.length/3,0);g.addGroup(c.length/3,sd.length/3,1);
+    const e=new THREE.BufferGeometry();e.setAttribute('position',new THREE.BufferAttribute(copy(edges),3));
+    return{geo:g,edges:e};
+  }
+
+  const lots=[];for(let i=-8;i<=8;i++)for(let j=-7;j<=5;j++)lots.push([i*SPACING,j*SPACING]);
+  const walls=slabs(wallQuads(),lots);
+  scene.add(new THREE.Mesh(walls.geo,[MATS.wall,MATS.wall]));
+  const figs=slabs(FIGURES,lots);
+  scene.add(new THREE.Mesh(figs.geo,[MATS.top,MATS.side]));
+  scene.add(new THREE.LineSegments(figs.edges,MATS.edge));
+  // The wives of the other houses stand still; only the Square's own wife is animated.
+  const others=slabs([bar(-0.3,0.05,0.17,-60)],lots.filter(([x,y])=>x||y));
+  scene.add(new THREE.Mesh(others.geo,[MATS.top,MATS.side]));
+  scene.add(new THREE.LineSegments(others.edges,MATS.edge));
+  const wifeShape=slabs([bar(0,0,0.17,0)],[[0,0]]);
+  const wife=new THREE.Group();
+  wife.add(new THREE.Mesh(wifeShape.geo,[MATS.top,MATS.side]));wife.add(new THREE.LineSegments(wifeShape.edges,MATS.edge));
+  scene.add(wife);
+  let grid=null,gridKey='';
+
+  // Fixed field of view, wide enough for the whole house both edge-on and from above.
+  function fov(aspect){
+    const across=Math.atan(1.15/(NEAR_DIST-0.9)),deep=Math.atan(1.2/NEAR_DIST);
+    return 2*Math.max(Math.atan(Math.tan(across)/aspect),deep)/G.RAD;
+  }
+
+  function frameAt(t){
+    const f=P.phaseAt(PHASES,t),e=P.ease(f.p);
+    let elev=EYE,dist=NEAR_DIST,k=FOG,reveal=HOME;
+    if(f.index===1){elev=EYE+(HIGH-EYE)*e;k=FOG*Math.max(0,1-e*2);}
+    else if(f.index===2){elev=HIGH;k=0;}
+    else if(f.index>=3){const q=f.index===3?e:1;elev=HIGH+(HIGHEST-HIGH)*q;dist=NEAR_DIST+(FAR_DIST-NEAR_DIST)*q;k=0;reveal=HOME+(CITY-HOME)*q;}
+    return{elev,dist,k,reveal,caption:f.phase.caption};
+  }
+
+  let shownCaption=null;
+  function draw(clock){
+    const f=frameAt(clock);
+    if(f.caption!==shownCaption){$('caption').textContent=f.caption;shownCaption=f.caption;}
+    const cv=$('view'),w=cv.clientWidth,h=cv.clientHeight;
+    renderer.setPixelRatio(window.devicePixelRatio||1);renderer.setSize(w,h,false);
+    const paper=C.token('--paper');
+    renderer.setClearColor(new THREE.Color(paper),1);
+    Object.values(MATS).forEach(m=>m.uniforms.col.value.set(C.token(m.userData.token)));
+    shared.bg.value.set(C.token('--fog'));shared.paper.value.set(paper);shared.k.value=f.k;shared.reveal.value=f.reveal;
+    const key=C.token('--paper-grid');
+    if(key!==gridKey){if(grid){scene.remove(grid);grid.geometry.dispose();}grid=new THREE.GridHelper(60,150,new THREE.Color(key),new THREE.Color(key));grid.position.y=-0.002;scene.add(grid);gridKey=key;}
+
+    const wa=wifeAt(clock);
+    wife.position.set(wa.p[0],0,-wa.p[1]);wife.rotation.y=wa.ang*G.RAD;
+
+    const phi=f.elev*G.RAD,ground=f.dist*Math.cos(phi);
+    camera.aspect=w/h;camera.fov=fov(camera.aspect);
+    camera.position.set(0,THICK/2+f.dist*Math.sin(phi),ground);
+    camera.lookAt(0,THICK/2,0);camera.updateProjectionMatrix();
+    shared.eye.value.set(0,ground);shared.near.value=ground-1;
+    renderer.render(scene,camera);
+    drawLabels(f,wa,w,h);
+  }
+
+  // Names fade in once the rooms are open to view, and out as the city comes into view.
+  function drawLabels(f,wa,w,h){
+    const[g]=C.setup($('labels'));
+    const alpha=Math.min(1,Math.max(0,(f.elev-40)/20))*Math.min(1,Math.max(0,(6-f.dist)/2));
+    if(alpha<=0)return;
+    g.globalAlpha=alpha;g.font=Math.round(Math.max(9,Math.min(12,w/52)))+'px "IBM Plex Mono", ui-monospace, monospace';g.textAlign='left';
+    g.fillStyle=C.token('--fg');
+    LABELS.forEach(l=>{
+      const[x,y]=l.wife?[wa.p[0]-0.07,wa.p[1]-0.03]:l.at;
+      const v=new THREE.Vector3(x,THICK,-y).project(camera);
+      const sx=(v.x+1)/2*w,tw=g.measureText(l.text).width,align=l.align||'center';
+      const left=align==='left'?sx:align==='right'?sx-tw:sx-tw/2;
+      g.fillText(l.text,Math.max(4,Math.min(w-tw-4,left)),(1-v.y)/2*h);
+    });
+    g.globalAlpha=1;
+  }
+
+  P.create({duration:P.total(PHASES),draw,stage:document.querySelector('.stage'),button:$('toggle')});
+})();
+</script>
+</body>
+</html>
