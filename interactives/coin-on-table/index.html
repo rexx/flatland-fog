@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coin on the Table · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.stage{position:relative}
+.stage canvas{height:340px;cursor:pointer}
+.angle{position:absolute;top:10px;right:12px;font-family:var(--font-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:1.6em;margin:0}
+.embedded .head{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <h1>Lower your eye to the table</h1>
+    <p>Look down on a triangle lying on a table, then sink your eye to the table's edge. The figure flattens until only a line is left, which is all a Flatlander ever sees.</p>
+  </header>
+
+  <div class="panel">
+    <div class="stage">
+      <canvas id="view" class="paper" role="img" aria-label="Animation: a triangle seen from directly above, then from lower and lower, until it is a single line seen in the fog of Flatland"></canvas>
+      <span class="angle" id="angle" aria-hidden="true">90°</span>
+    </div>
+    <div class="foot">
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <button id="toggle" aria-pressed="false">Play</button>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../../shared/geometry.js"></script>
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/slab3d.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const G=FlatlandGeometry,C=FlatlandCanvas;
+  const $=id=>document.getElementById(id);
+  const FOG=3,TOP=89;
+
+  // One cycle: look down, descend to the table's edge, let the fog of Flatland roll in, then start over.
+  const PHASES=[
+    {ms:1600,caption:'From above: a triangle on the table.'},
+    {ms:5200,caption:'Lowering the eye toward the edge of the table…'},
+    {ms:900, caption:'At the edge: nothing but a straight line.'},
+    {ms:1800,caption:'Inside Flatland, fog shades the line from bright to dim.'},
+    {ms:1200,caption:'Inside Flatland, fog shades the line from bright to dim.'}
+  ];
+  const DURATION=PHASES.reduce((s,p)=>s+p.ms,0);
+
+  const view=FlatlandSlab3D.create($('view'),{scheme:'ink'});
+  const verts=G.verts({kind:'3'},0);
+  const reduceMotion=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
+  const ease=p=>p<0.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+
+  // status: 'ready' (waiting to be seen), 'playing', 'paused' or 'done'.
+  let status='ready',clock=0,last=null,shownCaption=null;
+
+  // Returns {elev, fog, caption} for a time since the start; holds the last frame after the end.
+  function frameAt(t){
+    let i=0;while(i<PHASES.length-1&&t>=PHASES[i].ms){t-=PHASES[i].ms;i++;}
+    const p=Math.min(1,t/PHASES[i].ms);
+    switch(i){
+      case 0:return{elev:TOP,fog:0,caption:PHASES[0].caption};
+      case 1:return{elev:TOP*(1-ease(p)),fog:0,caption:PHASES[1].caption};
+      case 2:return{elev:0,fog:0,caption:PHASES[2].caption};
+      case 3:return{elev:0,fog:FOG*ease(p),caption:PHASES[3].caption};
+      default:return{elev:0,fog:FOG,caption:PHASES[4].caption};
+    }
+  }
+
+  function draw(){
+    const f=frameAt(Math.min(clock,DURATION));
+    $('angle').textContent=Math.round(f.elev)+'°';
+    if(f.caption!==shownCaption){$('caption').textContent=f.caption;shownCaption=f.caption;}
+    if(!view){
+      const[g]=C.setup($('view'));g.fillStyle=C.token('--muted');g.font='13px sans-serif';g.fillText('3D view unavailable: three.js did not load.',12,24);
+      return;
+    }
+    view.render('3',verts,f.fog,f.elev,C.token('--paper'),{fitDepth:true,fogColor:C.token('--fog')});
+  }
+
+  const LABELS={ready:'Play',playing:'Pause',paused:'Resume',done:'Replay'};
+  function setStatus(s){
+    status=s;last=null;
+    $('toggle').textContent=LABELS[s];
+    $('toggle').setAttribute('aria-pressed',String(s==='playing'));
+  }
+
+  function press(){
+    if(status==='playing')setStatus('paused');
+    else if(status==='done'){clock=0;setStatus('playing');}
+    else setStatus('playing');
+  }
+
+  function tick(now){
+    if(status==='playing'){
+      if(last!==null)clock+=Math.min(now-last,100);
+      last=now;
+      if(clock>=DURATION){clock=DURATION;setStatus('done');}
+      draw();
+    }
+    requestAnimationFrame(tick);
+  }
+
+  $('toggle').addEventListener('click',press);
+  $('view').addEventListener('click',press);
+  window.addEventListener('resize',draw);
+  try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
+  new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+  // Start once, the first time the whole stage is on screen. Inside a reading
+  // page the observer measures against the reader's viewport, not the frame's.
+  // With reduced motion the opening frame waits for the reader to press Play.
+  // ?t=<ms> opens on a fixed moment of the animation (for screenshots and links) without autoplay.
+  const startAt=parseFloat(new URLSearchParams(location.search).get('t'));
+  if(!isNaN(startAt)){
+    clock=Math.max(0,Math.min(DURATION,startAt));
+    setStatus(clock>=DURATION?'done':'paused');
+  }else if(!reduceMotion){
+    if('IntersectionObserver' in window){
+      const io=new IntersectionObserver(entries=>{
+        if(status!=='ready'||!entries.some(e=>e.intersectionRatio>=0.95))return;
+        io.disconnect();
+        setStatus('playing');
+      },{threshold:[0.95]});
+      io.observe(document.querySelector('.stage'));
+    }else{
+      setStatus('playing');
+    }
+  }
+  draw();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

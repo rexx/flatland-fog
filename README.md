@@ -1,0 +1,49 @@
+# Flatland Fog
+
+An interactive reading of *Flatland: A Romance of Many Dimensions* (Edwin A. Abbott, 1884). The full text sits alongside working models of the book's thought experiments: lower your eye to the table until a triangle becomes a line, read a stranger's rank from the fog, watch a Sphere pass through the plane.
+
+The site stays black and white like the book's ink plates. Colour appears for the first time in the sections about the Colour Bill (VIII to X).
+
+## Run it
+
+It is a static site with no build step. Serve the folder with any static server:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then open <http://localhost:8000/>. Opening `index.html` straight from disk also works, apart from the interactives that load three.js from a CDN when you are offline.
+
+## Layout
+
+| Path | What it holds |
+|---|---|
+| `index.html` | Contents page |
+| `read/` | One page per section: preface plus sections I to XXII |
+| `interactives/` | One folder per interactive; each works on its own page and embedded in a reading page |
+| `illustrations/` | The ten plates from the book, as SVG |
+| `shared/` | Theme, geometry, canvas drawing and the 3D slab renderer shared by every interactive |
+| `tools/import_text.py` | Regenerates `read/` and `index.html` from the Standard Ebooks source |
+| `docs/PLAN.md` | Plan: which section gets which interactive, and the milestones |
+
+## Interactives
+
+| Section | Interactive | Status |
+|---|---|---|
+| I | Lower your eye to the table (`coin-on-table`) | Done |
+| VI | Recognition by sight (`recognition-by-sight`) | Embedded, not yet moved in |
+
+## Regenerating the text
+
+```bash
+git clone --depth 1 https://github.com/standardebooks/edwin-a-abbott_flatland.git /tmp/se-flatland
+python3 tools/import_text.py /tmp/se-flatland
+```
+
+Which interactive appears in which section, and after which figure, is set in `EMBEDS` at the top of the script.
+
+## Credits and licence
+
+- Text and illustrations: the [Standard Ebooks](https://standardebooks.org/ebooks/edwin-a-abbott/flatland) edition, in the public domain; Standard Ebooks dedicates its own work under CC0 1.0.
+- Site code and interactives: MIT License, see [LICENSE](LICENSE).
+- 3D rendering uses [three.js](https://threejs.org/) r128 from cdnjs.

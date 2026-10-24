@@ -1,0 +1,60 @@
+/* Shared palette, type and controls for every page.
+   Grayscale throughout, like the book's ink plates: colour is reserved for the
+   sections about the Colour Bill (VIII to X). */
+:root{
+  --bg:#F2F2F0;--surface:#FFFFFF;--fg:#1A1A1A;--muted:#5E5E5C;--line:#DADAD7;--line-strong:#A8A8A4;
+  --accent:#1A1A1A;--accent-bg:#E6E6E3;--ok:#1F7A4D;--ok-bg:#DCF0E4;--bad:#B23A2E;--bad-bg:#F8E1DE;
+  --shape:#4A4A48;--shape-fill:rgba(0,0,0,0.10);--observer:#1A1A1A;--nearest:#6E6E6B;--extent:#8E8E8A;
+  --trace-b:#1A1A1A;--trace-w:#7A7A76;--marker:#9A9A96;--screen:#1E1E1E;--screen-line:#2B2B2B;
+  --figure-filter:none;
+  --paper:#ECECE9;--paper-2:#D2D2CE;--paper-grid:#DCDCD8;--ink:#1B1B1B;--fog:#FFFFFF;
+  --font-display:"Libre Caslon Display","Libre Caslon Text",Georgia,serif;
+  --font-text:"Libre Caslon Text",Georgia,"Times New Roman",serif;
+  --font-ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111111;--surface:#1A1A1A;--fg:#E8E8E6;--muted:#9C9C99;--line:#2C2C2C;--line-strong:#4D4D4B;
+  --accent:#E8E8E6;--accent-bg:#2E2E2E;--ok:#6FD3A0;--ok-bg:#173526;--bad:#F2928A;--bad-bg:#3D1C19;
+  --shape:#BDBDBA;--shape-fill:rgba(255,255,255,0.12);--observer:#E8E8E6;--nearest:#A0A09C;--extent:#7E7E7A;
+  --trace-b:#E8E8E6;--trace-w:#8E8E8A;--marker:#6E6E6A;--screen:#0E0E0E;--screen-line:#1E1E1E;
+  --figure-filter:invert(0.9) hue-rotate(180deg);
+  --paper:#232323;--paper-2:#454543;--paper-grid:#343432;--ink:#E8E8E6;--fog:#0A0A0A;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111111;--surface:#1A1A1A;--fg:#E8E8E6;--muted:#9C9C99;--line:#2C2C2C;--line-strong:#4D4D4B;
+  --accent:#E8E8E6;--accent-bg:#2E2E2E;--ok:#6FD3A0;--ok-bg:#173526;--bad:#F2928A;--bad-bg:#3D1C19;
+  --shape:#BDBDBA;--shape-fill:rgba(255,255,255,0.12);--observer:#E8E8E6;--nearest:#A0A09C;--extent:#7E7E7A;
+  --trace-b:#E8E8E6;--trace-w:#8E8E8A;--marker:#6E6E6A;--screen:#0E0E0E;--screen-line:#1E1E1E;
+  --figure-filter:invert(0.9) hue-rotate(180deg);
+  --paper:#232323;--paper-2:#454543;--paper-grid:#343432;--ink:#E8E8E6;--fog:#0A0A0A;color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:15px;line-height:1.6}
+img{max-width:100%}
+[hidden]{display:none!important}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:760px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+
+button,select{font:inherit;font-size:14px;color:var(--fg);background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;padding:6px 12px;cursor:pointer}
+button:hover:not(:disabled),select:hover{background:var(--bg)}
+button:disabled{cursor:default}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+input[type=checkbox]{accent-color:var(--accent)}
+
+.tabs{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;align-self:flex-start;max-width:100%;flex-wrap:wrap}
+.tabs button{border:none;border-radius:0;background:transparent;color:var(--muted);padding:7px 16px;font-size:14px}
+.tabs button+button{border-left:1px solid var(--line-strong)}
+.tabs button[aria-selected="true"],.tabs button[aria-pressed="true"]{background:var(--accent-bg);color:var(--accent);font-weight:500}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.lbl{font-size:13px;color:var(--muted);min-width:5.5em}
+.val{font-family:var(--font-mono);font-size:13px;font-weight:500;min-width:3.5em;text-align:right;font-variant-numeric:tabular-nums}
+.note{font-size:13px;color:var(--muted)}
+.cap{font-size:13px;color:var(--muted);margin:4px 0 -4px}
+canvas{display:block;width:100%}
+.screen{border-radius:6px;background:var(--screen)}
+.paper{border-radius:6px;background:var(--paper);border:1px solid var(--line)}
