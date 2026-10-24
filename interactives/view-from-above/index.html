@@ -11,6 +11,7 @@
 <style>
 .head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
 .head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none}
 .stage{position:relative;cursor:pointer}
 .stage canvas{height:clamp(240px,64vw,360px);display:block;width:100%}
 .stage .labels{position:absolute;inset:0;background:none;border-color:transparent;pointer-events:none}
@@ -23,6 +24,7 @@
 <body>
 <main class="wrap">
   <header class="head">
+    <a class="back" href="../../read/18-how-i-came-to-spaceland-and-what-i.html">← Section XVIII · How I Came to Spaceland, and What I Saw There</a>
     <h1>The view from above</h1>
     <p>From inside Flatland a house is only its outer wall. Lifted into Space, the Square looks down on his own house and sees every room, and everyone in it, laid open.</p>
   </header>
@@ -51,13 +53,13 @@
   const THICK=0.035,WALL=0.024,FOG=2.4,NEAR_DIST=3.4,FAR_DIST=13,SPACING=2.7;
   const EYE=0.3,HIGH=68,HIGHEST=78,HOME=1.5,CITY=24;
 
-  const PHASES=[
+  const PHASES=P.pace([
     {ms:2000,caption:'From inside Flatland, a house is a line: its outer wall, fading into the fog.'},
     {ms:5400,caption:'Lifted out of the plane, the Square looks down on his own house.'},
     {ms:4200,caption:'Every room lies open: his sons asleep, his grandsons to the South, his wife roving in the Hall.'},
     {ms:4800,caption:'“The further we receded from the object we beheld, the larger became the field of vision.”'},
     {ms:1400,caption:'“The further we receded from the object we beheld, the larger became the field of vision.”'}
-  ];
+  ],'caption');
 
   // ---- Floor plan, after the book's map of the house (illustration 9). North is +y.
   // The pentagon has circumradius 1 with its apex to the North; the Men's door is on the
@@ -204,10 +206,8 @@
     return{elev,dist,k,reveal,caption:f.phase.caption};
   }
 
-  let shownCaption=null;
   function draw(clock){
     const f=frameAt(clock);
-    if(f.caption!==shownCaption){$('caption').textContent=f.caption;shownCaption=f.caption;}
     const cv=$('view'),w=cv.clientWidth,h=cv.clientHeight;
     renderer.setPixelRatio(window.devicePixelRatio||1);renderer.setSize(w,h,false);
     const paper=C.token('--paper');
@@ -227,6 +227,7 @@
     shared.eye.value.set(0,ground);shared.near.value=ground-1;
     renderer.render(scene,camera);
     drawLabels(f,wa,w,h);
+    return f.caption;
   }
 
   // Names fade in once the rooms are open to view, and out as the city comes into view.
@@ -246,7 +247,8 @@
     g.globalAlpha=1;
   }
 
-  P.create({duration:P.total(PHASES),draw,stage:document.querySelector('.stage'),button:$('toggle')});
+  P.create({duration:P.total(PHASES),draw,stage:document.querySelector('.stage'),button:$('toggle'),
+    caption:$('caption'),steps:P.steps(PHASES,'caption')});
 })();
 </script>
 </body>

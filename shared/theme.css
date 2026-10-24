@@ -58,3 +58,5 @@ input[type=checkbox]{accent-color:var(--accent)}
 canvas{display:block;width:100%}
 .screen{border-radius:6px;background:var(--screen)}
 .paper{border-radius:6px;background:var(--paper);border:1px solid var(--line)}
+.player-nav{display:inline-flex;align-items:center;gap:6px}
+.player-nav .step{padding:6px 10px;color:var(--muted)}

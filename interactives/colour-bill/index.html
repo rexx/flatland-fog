@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Colour Bill · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+/* The only colours on the site: the red and green of the Universal Colour Bill. */
+:root{--paint-red:#C23B2E;--paint-green:#2F8F4E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--paint-red:#E8695C;--paint-green:#5CC283}}
+:root[data-theme="dark"]{--paint-red:#E8695C;--paint-green:#5CC283}
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none}
+.stage{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;cursor:pointer}
+.fig{display:flex;flex-direction:column;gap:10px;min-width:0}
+.who{font-family:var(--font-mono);font-size:12px;color:var(--fg);font-weight:500;letter-spacing:0.04em}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.embedded .head{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/09-of-the-universal-colour-bill.html">← Section IX · Of the Universal Colour Bill</a>
+    <h1>The Colour Bill</h1>
+    <p>The Bill would paint every woman and every Priest red in front and green behind. Seen from the right angle, the two would then look the same. The <a href="../../read/preface.html">preface to the second edition</a> says the Square identified himself “perhaps too closely” with Flatland’s historians, in whose pages the destinies of women “have seldom been deemed worthy of mention and never of careful consideration.”</p>
+  </header>
+
+  <div class="panel">
+    <div class="stage">
+      <div class="fig">
+        <div class="who">A woman</div>
+        <div class="label">From above</div>
+        <canvas class="paper top" style="height:clamp(150px,36vw,210px)" role="img" aria-label="A woman, a short straight line, lies across your line of sight; once painted, the half with her eye is red and the other half green"></canvas>
+        <div class="label">What you see</div>
+        <canvas class="paper strip" style="height:40px" aria-hidden="true"></canvas>
+      </div>
+      <div class="fig">
+        <div class="who">A Priest</div>
+        <div class="label">From above</div>
+        <canvas class="paper top" style="height:clamp(150px,36vw,210px)" role="img" aria-label="A Priest, a circle, faces you with the diameter between his red front and green back pointing straight at you"></canvas>
+        <div class="label">What you see</div>
+        <canvas class="paper strip" style="height:40px" aria-hidden="true"></canvas>
+      </div>
+    </div>
+    <div class="foot">
+      <p class="caption" aria-live="polite"></p>
+      <button aria-pressed="false">Play</button>
+    </div>
+  </div>
+</main>
+
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const C=FlatlandCanvas,P=FlatlandPlayer;
+  // The observer stands at (0, -D) looking toward +y. The Priest is a unit circle at the origin;
+  // the woman lies across the line of sight with her centre as near as the Priest's nearest point.
+  const D=3.2,NEAR=D-1,WOMAN_HALF=0.8,FOG=1.2,COLS=360;
+  const PRIEST_HALF=Math.asin(1/D),WOMAN_ANGLE=Math.atan(WOMAN_HALF/NEAR);
+  const FIELD=WOMAN_ANGLE*1.15;
+  const PHASES=P.pace([
+    {ms:3400,text:'Without colour, the eye tells them apart: her line is lit almost evenly, his fades fast toward its ends.'},
+    {ms:2400,paint:true,text:'The Bill: the half with the eye and mouth red, the hinder half green.'},
+    {ms:3400,text:'Now each is a line, half red and half green. His is a little shorter and shades off sooner.'},
+    {ms:2800,shade:true,text:'“Women would speedily learn to shade off their extremities so as to imitate the Circles.”'},
+    {ms:3400,text:'“The Colour Bill placed us under a great danger of confounding a Priest with a young woman.”'}
+  ],'text');
+  const tops=document.querySelectorAll('.top'),strips=document.querySelectorAll('.strip');
+
+  const bright=t=>Math.exp(-FOG*(t-NEAR));
+  function hexToRgb(hex){const n=parseInt(hex.replace('#',''),16);return[(n>>16)&255,(n>>8)&255,n&255];}
+  const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+  const css=c=>'rgb('+c.map(Math.round).join(',')+')';
+
+  // Distance from the observer to the circle along view angle a, or null.
+  function circleHit(a){
+    const s=Math.sin(a),c=Math.cos(a),b=-D*c,disc=b*b-(D*D-1);
+    return disc<0?null:-b-Math.sqrt(disc);
+  }
+
+  // Each column is {b, front} or null; front means the red half.
+  function womanProfile(shade){
+    const out=[];
+    for(let i=0;i<COLS;i++){
+      const a=-FIELD+2*FIELD*i/(COLS-1);
+      const t=NEAR/Math.cos(a),x=t*Math.sin(a);
+      if(Math.abs(x)>WOMAN_HALF){out.push(null);continue;}
+      // Shading off copies the Priest's fall-off at the same fraction of the width.
+      const tp=circleHit(Math.atan(x/NEAR)/WOMAN_ANGLE*PRIEST_HALF);
+      const b=bright(t)+(bright(tp===null?D:tp)-bright(t))*shade;
+      out.push({b,front:x<0});
+    }
+    return out;
+  }
+  function priestProfile(){
+    const out=[];
+    for(let i=0;i<COLS;i++){
+      const a=-FIELD+2*FIELD*i/(COLS-1),t=circleHit(a);
+      out.push(t===null?null:{b:bright(t),front:Math.sin(a)<0});
+    }
+    return out;
+  }
+
+  function palette(paint){
+    const ink=hexToRgb(C.token('--ink'));
+    return{
+      paper:C.token('--paper'),grid:C.token('--paper-grid'),ink,
+      fog:hexToRgb(C.token('--fog')),
+      front:mix(ink,hexToRgb(C.token('--paint-red')),paint),
+      back:mix(ink,hexToRgb(C.token('--paint-green')),paint)
+    };
+  }
+
+  function drawStrip(c,prof,pal){
+    const[g,w,h]=C.setup(c);
+    g.fillStyle=pal.paper;g.fillRect(0,0,w,h);
+    g.strokeStyle=pal.grid;g.lineWidth=1;g.beginPath();
+    for(let x=-h;x<w;x+=8){g.moveTo(x,h);g.lineTo(x+h,0);}
+    g.stroke();
+    const cw=w/prof.length;
+    prof.forEach((p,i)=>{if(!p)return;g.fillStyle=css(mix(pal.fog,p.front?pal.front:pal.back,Math.max(0,Math.min(1,p.b))));g.fillRect(i*cw,0,cw+0.6,h);});
+  }
+
+  function view(c,pal){
+    const[g,w,h]=C.setup(c);
+    const sc=Math.min(w/3.4,h/(D+1.6)),cx=w/2,cy=0.45*sc+1*sc;
+    const S=([x,y])=>[cx+x*sc,cy-y*sc];const O=S([0,-D]);
+    g.setLineDash([4,4]);g.strokeStyle=C.token('--line-strong');g.lineWidth=1;
+    [-FIELD,FIELD].forEach(a=>{const e=S([Math.sin(a)*(D+1.3),-D+Math.cos(a)*(D+1.3)]);g.beginPath();g.moveTo(O[0],O[1]);g.lineTo(e[0],e[1]);g.stroke();});
+    g.setLineDash([]);
+    g.fillStyle=C.token('--observer');g.beginPath();g.arc(O[0],O[1],5,0,2*Math.PI);g.fill();
+    return{g,S,sc};
+  }
+
+  function drawWoman(c,pal,shade){
+    const{g,S}=view(c,pal);
+    const N=40;g.lineWidth=4;g.lineCap='butt';
+    for(let i=0;i<N;i++){
+      const x0=-WOMAN_HALF+2*WOMAN_HALF*i/N,x1=-WOMAN_HALF+2*WOMAN_HALF*(i+1)/N,u=Math.abs((x0+x1)/2)/WOMAN_HALF;
+      g.globalAlpha=1-shade*0.75*u*u;
+      g.strokeStyle=css(x1<=0?pal.front:pal.back);
+      const a=S([x0,-1]),b=S([x1,-1]);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
+    }
+    g.globalAlpha=1;
+    const eye=S([-WOMAN_HALF+0.08,-1]);g.fillStyle=pal.paper;g.beginPath();g.arc(eye[0],eye[1],1.6,0,2*Math.PI);g.fill();
+  }
+
+  function drawPriest(c,pal,paint){
+    const{g,S,sc}=view(c,pal);const o=S([0,0]);
+    [[pal.front,Math.PI/2,3*Math.PI/2],[pal.back,-Math.PI/2,Math.PI/2]].forEach(([col,a0,a1])=>{
+      g.fillStyle=css(col);g.globalAlpha=0.08+0.14*paint;
+      g.beginPath();g.moveTo(o[0],o[1]);g.arc(o[0],o[1],sc,a0,a1);g.closePath();g.fill();
+      g.globalAlpha=1;g.strokeStyle=css(col);g.lineWidth=3;g.beginPath();g.arc(o[0],o[1],sc,a0,a1);g.stroke();
+    });
+    const top=S([0,1]),bot=S([0,-1]);
+    g.strokeStyle=C.token('--muted');g.lineWidth=1;g.setLineDash([3,3]);g.beginPath();g.moveTo(top[0],top[1]);g.lineTo(bot[0],bot[1]);g.stroke();g.setLineDash([]);
+    const m=S([-1,0]);g.fillStyle=pal.paper;g.beginPath();g.arc(m[0],m[1],1.6,0,2*Math.PI);g.fill();
+  }
+
+  function draw(t){
+    const f=P.phaseAt(PHASES,t);
+    const paint=f.index<1?0:f.index===1?P.ease(f.p):1;
+    const shade=f.index<3?0:f.index===3?P.ease(f.p):1;
+    const pal=palette(paint);
+    drawWoman(tops[0],pal,shade);drawPriest(tops[1],pal,paint);
+    drawStrip(strips[0],womanProfile(shade),pal);drawStrip(strips[1],priestProfile(),pal);
+    return f.phase.text;
+  }
+
+  P.create({duration:P.total(PHASES),draw,stage:document.querySelector('.stage'),button:document.querySelector('.foot button'),
+    caption:document.querySelector('.caption'),steps:P.steps(PHASES,'text')});
+})();
+</script>
+</body>
+</html>

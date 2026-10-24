@@ -41,6 +41,9 @@ EMBEDS = {
         {"after": "text:contemplating one of his sides", "slug": "recognition-by-sight",
          "query": "scene=grandson", "title": "A hexagonal grandson"},
     ],
+    9: [
+        {"after": "illustration-5", "slug": "colour-bill", "title": "A woman and a Priest under the Colour Bill"},
+    ],
     14: [
         {"after": "illustration-7", "slug": "passing-through", "query": "scene=lineland",
          "title": "The Square leaves Lineland"},

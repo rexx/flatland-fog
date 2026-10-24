@@ -33,6 +33,7 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | I | Lower your eye to the table (`coin-on-table`) | Done |
 | VI | Recognition by sight (`recognition-by-sight`): the Merchant, the Physician and a hexagonal grandson walk out of the fog | Done |
 | VI | The recognition game (`recognition-game`): turn any figure in the fog, then test your eye; linked from the Section VI animation | Done |
+| IX | The Colour Bill (`colour-bill`): painted red in front and green behind, a woman and a Priest become the same line; the only colour on the site | Done |
 | XIV, XVI | Passing through (`passing-through`): the Square steps out of Lineland, and the Sphere rises out of Flatland | Done |
 | XVIII | The view from above (`view-from-above`): rise out of the plane and see into the Square's house, then the whole city | Done |
 

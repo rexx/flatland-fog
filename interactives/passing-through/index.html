@@ -11,6 +11,7 @@
 <style>
 .head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
 .head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none;display:block}
 .panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
 .stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
 .label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
@@ -24,6 +25,8 @@
 <body>
 <main class="wrap">
   <header class="head">
+    <a class="back" href="../../read/14-how-i-vainly-tried-to-explain-the-nature.html" data-scene="lineland">← Section XIV · How I Vainly Tried to Explain the Nature of Flatland</a>
+    <a class="back" href="../../read/16-how-the-stranger-vainly-endeavoured-to-reveal-to.html" data-scene="sphere">← Section XVI · How the Stranger Vainly Endeavoured to Reveal to Me in Words the Mysteries of Spaceland</a>
     <h1>Passing through</h1>
     <p>A world can hold only a slice of a visitor from the next dimension up. The Square steps out of Lineland, and the Sphere rises out of Flatland.</p>
   </header>
@@ -76,12 +79,13 @@
     if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
     SCENES[id](el);
   });
+  document.querySelectorAll('.back[data-scene]').forEach(a=>{if(SCENES[scene]&&a.dataset.scene!==scene)a.hidden=true;});
 
   function bind(el,phases,draw){
-    const caption=el.querySelector('.caption');let shown=null;
     P.create({
       duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('button'),
-      draw:t=>{const text=draw(P.phaseAt(phases,t));if(text!==shown){caption.textContent=text;shown=text;}}
+      caption:el.querySelector('.caption'),steps:P.steps(phases,'text'),
+      draw:t=>draw(P.phaseAt(phases,t))
     });
   }
 
@@ -92,22 +96,25 @@
     const FOLK=[[-3.7,-3.25],[-2.75,-2.4],[-1.75,-1.35],[1.0,2.45],[2.8,3.15]];
     const WOMEN=[-2.05,3.55];
     const KING=3;
-    const PHASES=[
+    const PHASES=P.pace([
       {ms:2200,text:'Lineland is a single Line. Only a slice of the Square lies on it.'},
-      {ms:3800,rise:true},
+      {ms:3000,text:'“I see you, I see you still; you are not moving.”'},
+      {ms:1800,text:'“She is vanished; she is dead.”'},
       {ms:2600,text:'Out of the Line, he can see all of it: every Linelander, end to end.'},
-      {ms:2600,fall:true,text:'He steps back in, and the slice is there again at full length, all at once.'},
+      {ms:2600,text:'He steps back in, and the slice is there again at full length, all at once.'},
       {ms:900,text:'He steps back in, and the slice is there again at full length, all at once.'}
-    ];
+    ],'text');
     const view=el.querySelector('.view'),strip=el.querySelector('.strip');
 
     function layout(w,h){const sc=Math.min(w/8.4,h/2.3);return{sc,cx:w/2,ly:h-0.6*sc};}
 
     function draw(f){
+      // He rises slowly to the edge of the Line while the King still sees him, then clears it.
       let y=0;
-      if(f.index===1)y=OUT*P.ease(f.p);
-      else if(f.index===2)y=OUT;
-      else if(f.index===3)y=OUT*(1-P.ease(f.p));
+      if(f.index===1)y=S/2*P.ease(f.p);
+      else if(f.index===2)y=S/2+(OUT-S/2)*P.ease(f.p);
+      else if(f.index===3)y=OUT;
+      else if(f.index===4)y=OUT*(1-P.ease(f.p));
       const on=y-S/2<1e-6;
 
       const[g,w,h]=C.setup(view);const L=layout(w,h);
@@ -130,7 +137,6 @@
       WOMEN.forEach(x=>s.fillRect(X(x)-1.5,0,3,sh));
       if(on){s.fillStyle=C.token('--ink');s.fillRect(X(-S/2),0,S*L.sc,sh);}
 
-      if(f.phase.rise)return on?'“I see you, I see you still; you are not moving.”':'“She is vanished; she is dead.”';
       return f.phase.text;
     }
     bind(el,PHASES,draw);
@@ -141,20 +147,23 @@
   function setupSphere(el){
     const TOP=1.3,FOG=1.2,COLS=360;
     const CIRCLE=G.verts({kind:'96'},0);
-    const PHASES=[
+    const PHASES=P.pace([
       {ms:1800,text:'The plane cuts the Sphere through his middle: to the Square, a Circle of full size.'},
-      {ms:4200,rise:true},
+      {ms:3400,text:'“As I rise in Space, so my sections become smaller.”'},
+      {ms:1000,text:'He dwindles to a point, and vanishes.'},
       {ms:1800,text:'“Am I quite gone? Are you convinced now?”'},
-      {ms:4200,fall:true,text:'“Now I will gradually return to Flatland.”'},
+      {ms:4200,text:'“Now I will gradually return to Flatland.”'},
       {ms:1000,text:'The section grows back to its full size.'}
-    ];
+    ],'text');
     const view=el.querySelector('.view'),strip=el.querySelector('.strip');
 
     function draw(f){
+      // He rises until his section is a point, then clears the plane.
       let hgt=0;
-      if(f.index===1)hgt=TOP*P.ease(f.p);
-      else if(f.index===2)hgt=TOP;
-      else if(f.index===3)hgt=TOP*(1-P.ease(f.p));
+      if(f.index===1)hgt=P.ease(f.p);
+      else if(f.index===2)hgt=1+(TOP-1)*P.ease(f.p);
+      else if(f.index===3)hgt=TOP;
+      else if(f.index===4)hgt=TOP*(1-P.ease(f.p));
       const r=Math.sqrt(Math.max(0,1-hgt*hgt));
 
       const[g,w,h]=C.setup(view);
@@ -177,7 +186,6 @@
       const prof=r>1e-3?G.profile('96',CIRCLE.map(([x,y])=>[x*r,y*r]),FOG,COLS):new Array(COLS).fill(null);
       C.drawInkStrip(strip,prof);
 
-      if(f.phase.rise)return r>0?'“As I rise in Space, so my sections become smaller.”':'He dwindles to a point, and vanishes.';
       return f.phase.text;
     }
     bind(el,PHASES,draw);
