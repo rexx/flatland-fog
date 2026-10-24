@@ -36,6 +36,7 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | IX | The Colour Bill (`colour-bill`): painted red in front and green behind, a woman and a Priest become the same line; the only colour on the site | Done |
 | XIV, XVI | Passing through (`passing-through`): the Square steps out of Lineland, and the Sphere rises out of Flatland | Done |
 | XVIII | The view from above (`view-from-above`): rise out of the plane and see into the Square's house, then the whole city | Done |
+| XIX | Strictly according to Analogy (`dimension-ladder`): the Sphere stacks square cards into a Cube; then a moving point makes a line, a line a square, a square a cube, and a cube, drawn as its shadow, a figure with sixteen corners | Done |
 
 ## Regenerating the text
 

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strictly According to Analogy · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none}
+.stage{display:flex;flex-direction:column;gap:12px;cursor:pointer}
+.tally{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;table-layout:fixed}
+.tally th,.tally td{padding:5px 4px;text-align:center;border-top:1px solid var(--line);transition:opacity .4s}
+.tally th{font-weight:500;color:var(--muted)}
+.tally th:first-child,.tally td:first-child{text-align:left;color:var(--muted);font-weight:400;width:24%}
+.tally td{color:var(--fg);font-size:14px}
+.tally td small{display:block;font-size:11px;color:var(--muted)}
+.tally .off{opacity:0}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.scenes{display:flex;flex-direction:column;gap:24px}
+.embedded .head,.embedded .panel h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/19-how-though-the-sphere-showed-me-other-mysteries.html">← Section XIX · How, Though the Sphere Showed Me Other Mysteries of Spaceland, I Still Desired More; and What Came of It</a>
+    <h1>Strictly according to Analogy</h1>
+    <p>The Sphere builds a Cube out of square cards. The Square then reasons from Point to Line to Square to Cube, and asks what a moving Cube would make. No one in Spaceland can see that, so the last figure here is only its shadow.</p>
+  </header>
+
+  <div class="scenes">
+    <section class="panel" id="cube">
+      <h2>The Sphere builds a Cube</h2>
+      <div class="stage">
+        <canvas class="paper view" style="height:clamp(220px,52vw,300px)" role="img" aria-label="Square cards are stacked one on another until the stack is as high as it is wide; it becomes a shaded cube"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="analogy">
+      <h2>Point, Line, Square, Cube, and then?</h2>
+      <div class="stage">
+        <canvas class="paper view" style="height:clamp(220px,52vw,300px)" role="img" aria-label="A point moves and traces a line; the line moves and traces a square; the square moves and traces a cube; the cube moves in a new direction and traces a figure with sixteen corners"></canvas>
+        <table class="tally">
+          <thead><tr><th></th><th>Point</th><th>Line</th><th>Square</th><th>Cube</th><th>?</th></tr></thead>
+          <tbody>
+            <tr class="ends"><td>terminal points</td><td>1</td><td>2</td><td>4</td><td>8</td><td>16</td></tr>
+            <tr class="bounds"><td>bounded by</td><td>&mdash;</td><td>2<small>points</small></td><td>4<small>lines</small></td><td>6<small>squares</small></td><td>8<small>cubes</small></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const C=FlatlandCanvas,P=FlatlandPlayer;
+  const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+  // Screen directions for the first three dimensions, in units of one side.
+  const DIRS=[[1,0],[0,-1],[0.5,-0.36]];
+  const at=(a,b,z)=>[DIRS[0][0]*a+DIRS[1][0]*b+DIRS[2][0]*z,DIRS[0][1]*a+DIRS[1][1]*b+DIRS[2][1]*z];
+
+  function bind(el,phases,draw){
+    P.create({
+      duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('.foot button'),
+      caption:el.querySelector('.caption'),steps:P.steps(phases,'text'),
+      draw:t=>draw(P.phaseAt(phases,t))
+    });
+  }
+
+  // Fits the unit cube in the canvas, leaving a strip at the bottom for a label.
+  function frame(c){
+    const[g,w,h]=C.setup(c);
+    const room=h-44,sc=Math.min(w*0.7/1.5,room*0.86/1.36);
+    const cx=w/2-0.75*sc,cy=22+room/2+0.68*sc;
+    return{g,w,h,sc,S:([x,y])=>[cx+x*sc,cy+y*sc]};
+  }
+
+  function rgb(hex){const n=parseInt(hex.replace('#',''),16);return[(n>>16)&255,(n>>8)&255,n&255];}
+  const tint=(a,b,t)=>'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')';
+
+  // The Sphere stacks square cards, each on the last, until the stack is a Cube; then the
+  // cards give way to a solid with light and shade, which the Square still reads as a Plane.
+  function setupCube(el){
+    const CARDS=9,DROP=0.35;
+    const PHASES=P.pace([
+      {ms:1400,text:'“Behold this multitude of moveable square cards.”'},
+      {ms:1600,text:'“See, I put one on another, not, as you supposed, Northward of the other, but on the other.”'},
+      {ms:4200,text:'“Now a second, now a third. See, I am building up a Solid by a multitude of Squares parallel to one another.”'},
+      {ms:1800,text:'“Now the Solid is complete, being as high as it is long and broad, and we call it a Cube.”'},
+      {ms:1800,text:'“…methinks I see no Solid, but a Plane such as we infer in Flatland.”'}
+    ],'text');
+    const view=el.querySelector('.view');
+
+    function poly(g,S,pts){g.beginPath();pts.forEach((p,i)=>{const q=S(p);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]);});g.closePath();}
+
+    function draw(f){
+      // stack: how many cards are down, with the fraction of the one being placed.
+      let stack=1,solid=0;
+      if(f.index===1)stack=1+P.ease(f.p);
+      else if(f.index===2)stack=2+(CARDS-2)*f.p;
+      else if(f.index>=3){stack=CARDS;solid=f.index===3?P.ease(f.p):1;}
+      const{g,h,S}=frame(view);
+      const paper=rgb(C.token('--paper')),ink=rgb(C.token('--ink'));
+
+      if(solid<1){
+        g.globalAlpha=1-solid;
+        const top=Math.min(CARDS-1,Math.floor(stack)),frac=stack-Math.floor(stack);
+        for(let i=top;i>=0;i--){
+          let z=i/(CARDS-1),a=1;
+          if(i===Math.floor(stack)&&frac>0){const e=1-Math.pow(1-frac,3);z+=DROP*(1-e);a=frac;}
+          else if(i>=stack)continue;
+          g.globalAlpha=(1-solid)*a;
+          poly(g,S,[at(0,0,z),at(1,0,z),at(1,1,z),at(0,1,z)]);
+          g.fillStyle=tint(paper,ink,0.14);g.fill();
+          g.strokeStyle=tint(paper,ink,0.9);g.lineWidth=1;g.stroke();
+        }
+      }
+      if(solid>0){
+        g.globalAlpha=solid;g.strokeStyle=tint(paper,ink,0.9);g.lineWidth=1.5;g.lineJoin='round';
+        [[[0,1,0],[1,1,0],[1,1,1],[0,1,1],0.12],[[1,0,0],[1,0,1],[1,1,1],[1,1,0],0.42],[[0,0,0],[1,0,0],[1,1,0],[0,1,0],0.24]].forEach(face=>{
+          poly(g,S,face.slice(0,4).map(p=>at(...p)));g.fillStyle=tint(paper,ink,face[4]);g.fill();g.stroke();
+        });
+      }
+      g.globalAlpha=1;
+      g.fillStyle=C.token('--muted');g.font=MONO;
+      const n=Math.min(CARDS,Math.ceil(stack-1e-6));
+      g.fillText(solid>=1?'a Cube':n+(n===1?' square card':' square cards'),10,h-10);
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // A Point, Line, Square and Cube each move one side's length in a new direction. The fourth
+  // direction can only be drawn as a shadow: the moving Cube shrinks toward its own centre, as
+  // if receding in perspective, and ends as a cube inside a cube.
+  function setupAnalogy(el){
+    const SHRINK=0.55,WAKE=6;
+    const MID=at(0.5,0.5,0.5);
+    // Phase k (1 to 4) sweeps the (k-1)-cube along dimension k-1.
+    const PHASES=P.pace([
+      {ms:900,text:'“In One Dimension, did not a moving Point produce a Line with two terminal points?”'},
+      {ms:1800,text:'“In One Dimension, did not a moving Point produce a Line with two terminal points?”'},
+      {ms:2200,text:'“In Two Dimensions, did not a moving Line produce a Square with four terminal points?”'},
+      {ms:2600,text:'“In Three Dimensions, did not a moving Square produce … a Cube, with eight terminal points?”'},
+      {ms:3000,text:'“And in Four Dimensions shall not a moving Cube … result in a still more divine organization with sixteen terminal points?”'},
+      {ms:1800,text:'“Behold the infallible confirmation of the series, 2, 4, 8, 16: is not this a geometrical progression?”'},
+      {ms:1800,text:'“Again … 2, 4, 6 … must have 8 bounding Cubes: and is not this also … strictly according to Analogy?”'}
+    ],'text');
+    const view=el.querySelector('.view');
+    const ends=[...el.querySelectorAll('.tally .ends td')].slice(1);
+    const bounds=[...el.querySelectorAll('.tally .bounds td')].slice(1);
+    const heads=[...el.querySelectorAll('.tally th')].slice(1);
+    ends.concat(bounds,heads).forEach(c=>c.classList.add('off'));
+
+    // Where corner m of the figure lies once dimension k has been swept a fraction s.
+    function corner(m,n,k,s){
+      let x=0,y=0;
+      for(let d=0;d<Math.min(n,3);d++)if(m&(1<<d)){const f=d===k?s:1;x+=DIRS[d][0]*f;y+=DIRS[d][1]*f;}
+      if(n>3&&m&8){const f=1-SHRINK*(k===3?s:1);x=MID[0]+(x-MID[0])*f;y=MID[1]+(y-MID[1])*f;}
+      return[x,y];
+    }
+
+    // Corners of a k-cube swept a fraction s along dimension k, and its edges.
+    function figure(k,s){
+      const pts=[];
+      const n=s>0?k+1:k;
+      for(let m=0;m<(1<<n);m++)pts.push(corner(m,n,k,s));
+      const edges=[];
+      for(let m=0;m<pts.length;m++)for(let d=0;d<n;d++)if(!(m&(1<<d)))edges.push([m,m|(1<<d)]);
+      return{pts,edges};
+    }
+
+    function draw(f){
+      let k=3,s=1;
+      if(f.index===0){k=0;s=0;}
+      else if(f.index<=4){k=f.index-1;s=P.ease(f.p);}
+      const fig=figure(k,s);
+      const[g,w,h]=C.setup(view);
+      const room=h-44,sc=Math.min(w*0.7/1.5,room*0.86/1.36);
+      let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+      fig.pts.forEach(([x,y])=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);});
+      const cx=w/2-(x0+x1)/2*sc,cy=22+room/2-(y0+y1)/2*sc;
+      const S=([x,y])=>[cx+x*sc,cy+y*sc];
+      const ink=C.token('--ink'),muted=C.token('--muted');
+
+      // While a figure moves it leaves a wake of copies at even steps, like the Sphere's stacked cards.
+      if(k>0&&s>0&&f.index<=4){
+        const base=figure(k,0),top=1<<k;
+        g.strokeStyle=C.token('--line-strong');g.lineWidth=1;
+        for(let i=1;i<WAKE;i++){
+          const q=i/WAKE;if(q>=s)break;
+          g.beginPath();
+          base.edges.forEach(([a,b])=>{
+            const p1=S(corner(a|top,k+1,k,q)),p2=S(corner(b|top,k+1,k,q));
+            g.moveTo(p1[0],p1[1]);g.lineTo(p2[0],p2[1]);
+          });
+          g.stroke();
+        }
+      }
+
+      g.strokeStyle=ink;g.lineWidth=1.5;g.lineCap='round';g.beginPath();
+      fig.edges.forEach(([a,b])=>{const p1=S(fig.pts[a]),p2=S(fig.pts[b]);g.moveTo(p1[0],p1[1]);g.lineTo(p2[0],p2[1]);});
+      g.stroke();
+      g.fillStyle=ink;
+      fig.pts.forEach(p=>{const q=S(p);g.beginPath();g.arc(q[0],q[1],3,0,2*Math.PI);g.fill();});
+
+      g.fillStyle=muted;g.font=MONO;
+      g.fillText(fig.pts.length+(fig.pts.length===1?' point':' terminal points'),10,h-10);
+      if(k===3&&s>0)g.fillText('a new direction, drawn as a shadow',10,18);
+
+      const done=s>=1?k+1:k;
+      heads.forEach((c,i)=>c.classList.toggle('off',i>done));
+      ends.forEach((c,i)=>c.classList.toggle('off',i>done));
+      bounds.forEach((c,i)=>c.classList.toggle('off',f.index<6||i>done));
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // ?scene=cube|analogy shows one scene, so each can sit beside its own passage.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const SCENES={cube:setupCube,analogy:setupAnalogy};
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
+    SCENES[id](el);
+  });
+})();
+</script>
+</body>
+</html>

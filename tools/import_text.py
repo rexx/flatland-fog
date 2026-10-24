@@ -55,6 +55,12 @@ EMBEDS = {
     18: [
         {"after": "text:the secrets of the earth", "slug": "view-from-above", "title": "The view from above"},
     ],
+    19: [
+        {"after": "illustration-10", "slug": "dimension-ladder", "query": "scene=cube",
+         "title": "The Sphere builds a Cube"},
+        {"after": "text:must have 8 bounding Cubes", "slug": "dimension-ladder", "query": "scene=analogy",
+         "title": "Strictly according to Analogy"},
+    ],
 }
 
 KEEP_ATTRS = {"id", "href", "src", "alt", "title", "lang"}
