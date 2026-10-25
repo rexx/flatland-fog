@@ -41,6 +41,14 @@ EMBEDS = {
         {"after": "text:contemplating one of his sides", "slug": "recognition-by-sight",
          "query": "scene=grandson", "title": "A hexagonal grandson"},
     ],
+    8: [
+        {"after": "text:turned his variegated frame", "slug": "colour-revolt", "query": "scene=chromatistes",
+         "title": "Chromatistes paints himself"},
+        {"after": "text:pure from the pollution of paint", "slug": "colour-revolt", "query": "scene=spread",
+         "title": "The fashion spreads"},
+        {"after": "text:exchanged them for the artist", "slug": "colour-revolt", "query": "scene=review",
+         "title": "A military review"},
+    ],
     9: [
         {"after": "illustration-5", "slug": "colour-bill", "title": "A woman and a Priest under the Colour Bill"},
     ],

@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Colour Revolt · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none}
+.scene h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.who{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:0.04em}
+.who strong{font-weight:500;color:var(--fg)}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.embedded .head,.embedded .scene h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/08-of-the-ancient-practice-of-painting.html">← Section VIII · Of the Ancient Practice of Painting</a>
+    <h1>The Colour Revolt</h1>
+    <p>“Colour, if tradition speaks the truth, once for the space of half a dozen centuries or more, threw a transient splendour over the lives of our ancestors.” Three moments from Section VIII: Chromatistes paints himself, the fashion spreads, and the army passes in review.</p>
+  </header>
+
+  <section class="scene" id="chromatistes">
+    <h2>Chromatistes</h2>
+    <div class="panel">
+      <div class="stage">
+        <div class="label">From above</div>
+        <canvas class="paper top" style="height:clamp(190px,44vw,260px)" role="img" aria-label="Chromatistes, a Pentagon, among his house, his slaves, his father and his son; first all colourless, then painted side by side in different colours"></canvas>
+        <div class="label">What a neighbour sees</div>
+        <canvas class="paper strip" style="height:36px" aria-hidden="true"></canvas>
+        <div class="label">The same, without colour</div>
+        <canvas class="paper strip grey" style="height:36px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" id="spread">
+    <h2>The fashion spreads</h2>
+    <div class="panel">
+      <div class="stage">
+        <div class="who"><span>From above</span><strong class="when"></strong></div>
+        <canvas class="paper top" style="height:clamp(200px,52vw,330px)" role="img" aria-label="Flatlanders of every rank walk left to right along a street; colour spreads through them class by class until only the women, who are lines, and the Priests, who are circles, stay colourless"></canvas>
+        <div class="label">What you see</div>
+        <canvas class="paper strip" style="height:36px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" id="review">
+    <h2>A military review</h2>
+    <div class="panel">
+      <div class="stage">
+        <div class="label">From above</div>
+        <canvas class="paper top" style="height:clamp(200px,52vw,330px)" role="img" aria-label="An army in review marches left to right past the commander: a line of Isosceles faces about, then tricoloured Equilateral militia, rotating Square artillerymen with their guns, and many-coloured Pentagons and Hexagons darting past"></canvas>
+        <div class="label">What the commander sees</div>
+        <canvas class="paper strip" style="height:36px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const C=FlatlandCanvas,P=FlatlandPlayer;
+  const COLS=360,TAU=2*Math.PI;
+
+  // Paints named in Section VIII where it names them; [light theme, dark theme].
+  const HUES={
+    red:['#C23B2E','#E8695C'],white:['#FFFFFF','#F4F2EC'],blue:['#2F5DA8','#6E9BE8'],
+    orange:['#D9782B','#F0A050'],purple:['#7B3FA8','#B88AE6'],black:['#1B1B1B','#4A4A48'],
+    mauve:['#B07CB8','#D8A8DE'],ultramarine:['#2E35B0','#7C82F2'],gamboge:['#D99A0B','#F2C04A'],
+    umber:['#7A3420','#B8735C'],vermilion:['#E03A28','#FF6A55'],
+    green:['#2F8F4E','#5CC283'],teal:['#1F7F86','#55BEC4'],rose:['#C24A78','#EE84AE']
+  };
+  const BRIGHT=['red','orange','gamboge','green','teal','blue','ultramarine','purple','rose','umber'];
+
+  function hexToRgb(hex){const n=parseInt(hex.replace('#',''),16);return[(n>>16)&255,(n>>8)&255,n&255];}
+  const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+  const css=c=>'rgb('+c.map(Math.round).join(',')+')';
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+  function palette(){
+    const paper=hexToRgb(C.token('--paper'));
+    const dark=(paper[0]+paper[1]+paper[2])/3<128;
+    const hues={};Object.keys(HUES).forEach(k=>{hues[k]=hexToRgb(HUES[k][dark?1:0]);});
+    return{paper,paperHex:C.token('--paper'),grid:C.token('--paper-grid'),ink:hexToRgb(C.token('--ink')),
+      fog:hexToRgb(C.token('--fog')),outline:C.token('--line-strong'),fill:C.token('--paper-2'),
+      observer:C.token('--observer'),hues};
+  }
+
+  // Figures. A polygon has local vertices with its front (the eye) toward local +y; facing is the
+  // world direction of that front, clockwise from +y. cols names each side's paint (side k runs
+  // from vertex k to k+1); paint (0 to 1) blends from ink to those paints; alpha fades it in or out.
+  function regular(n,r){const v=[];for(let k=0;k<n;k++){const a=TAU*k/n;v.push([r*Math.sin(a),r*Math.cos(a)]);}return v;}
+  function isosceles(len,base){return[[0,len*0.62],[base/2,-len*0.38],[-base/2,-len*0.38]];}
+  function figure(local,x,y,facing,cols,extra){return Object.assign({kind:'poly',local,x,y,facing,cols,paint:0,alpha:1},extra||{});}
+  function world(f){
+    const s=Math.sin(f.facing),c=Math.cos(f.facing);
+    return f.local.map(([lx,ly])=>[f.x+lx*c+ly*s,f.y-lx*s+ly*c]);
+  }
+  function sideColour(f,k,pal,painted){
+    const name=f.cols&&f.cols[k];
+    return name&&painted?mix(pal.ink,pal.hues[name],f.paint):pal.ink;
+  }
+
+  // Casts one ray per column from the observer; the nearest side hit sets the colour, fading into
+  // fog with distance. Returns per column null or {rgb, alpha}.
+  function view(figs,eye,pal,painted){
+    const out=[],segs=[];
+    figs.forEach(f=>{
+      if(f.alpha<=0.01)return;
+      if(f.kind==='circle'){segs.push({f,circle:true});return;}
+      const v=world(f);const n=f.kind==='seg'?1:v.length;
+      for(let k=0;k<n;k++)segs.push({f,k,a:v[k],b:v[(k+1)%v.length]});
+    });
+    for(let i=0;i<COLS;i++){
+      const ang=eye.dir-eye.half+2*eye.half*i/(COLS-1),dx=Math.sin(ang),dy=Math.cos(ang);
+      let best=Infinity,hit=null;
+      segs.forEach(s=>{
+        let t;
+        if(s.circle){
+          const ox=eye.x-s.f.x,oy=eye.y-s.f.y,b=ox*dx+oy*dy,disc=b*b-(ox*ox+oy*oy-s.f.r*s.f.r);
+          if(disc<0)return;t=-b-Math.sqrt(disc);
+        }else{
+          const ex=s.b[0]-s.a[0],ey=s.b[1]-s.a[1],den=dx*ey-dy*ex;
+          if(Math.abs(den)<1e-9)return;
+          const qx=s.a[0]-eye.x,qy=s.a[1]-eye.y;
+          t=(qx*ey-qy*ex)/den;const u=(qx*dy-qy*dx)/den;
+          if(u<0||u>1)return;
+        }
+        if(t>1e-6&&t<best){best=t;hit=s;}
+      });
+      if(!hit){out.push(null);continue;}
+      const rgb=hit.circle?pal.ink:sideColour(hit.f,hit.k,pal,painted);
+      const b=clamp(Math.exp(-eye.fog*(best-eye.near)),0,1);
+      out.push({rgb:mix(pal.fog,rgb,b),alpha:hit.f.alpha});
+    }
+    return out;
+  }
+
+  function drawStrip(c,prof,pal){
+    const[g,w,h]=C.setup(c);
+    g.fillStyle=pal.paperHex;g.fillRect(0,0,w,h);
+    g.strokeStyle=pal.grid;g.lineWidth=1;g.beginPath();
+    for(let x=-h;x<w;x+=8){g.moveTo(x,h);g.lineTo(x+h,0);}
+    g.stroke();
+    const cw=w/prof.length;
+    prof.forEach((p,i)=>{if(!p)return;g.globalAlpha=p.alpha;g.fillStyle=css(p.rgb);g.fillRect(i*cw,0,cw+0.6,h);});
+    g.globalAlpha=1;
+  }
+
+  // Top-down view fitted to the world box [x0, x1] by [y0, y1].
+  function drawTop(c,box,figs,eye,pal){
+    const[g,w,h]=C.setup(c);
+    const sc=Math.min(w/(box[1]-box[0]),h/(box[3]-box[2]));
+    const cx=w/2-(box[0]+box[1])/2*sc,cy=h/2+(box[2]+box[3])/2*sc;
+    const S=([x,y])=>[cx+x*sc,cy-y*sc];
+    const O=S([eye.x,eye.y]),L=(box[3]-box[2])*1.6;
+    g.setLineDash([4,4]);g.strokeStyle=pal.outline;g.lineWidth=1;
+    [-eye.half,eye.half].forEach(a=>{const e=S([eye.x+Math.sin(eye.dir+a)*L,eye.y+Math.cos(eye.dir+a)*L]);g.beginPath();g.moveTo(O[0],O[1]);g.lineTo(e[0],e[1]);g.stroke();});
+    g.setLineDash([]);
+    const lw=Math.max(2,Math.min(3.2,sc*0.06));
+    figs.forEach(f=>{
+      if(f.alpha<=0.01)return;
+      g.globalAlpha=f.alpha;g.lineCap='round';g.lineJoin='round';
+      if(f.kind==='circle'){
+        const o=S([f.x,f.y]);
+        g.fillStyle=pal.fill;g.beginPath();g.arc(o[0],o[1],f.r*sc,0,TAU);g.fill();
+        g.strokeStyle=css(pal.ink);g.lineWidth=lw;g.stroke();
+        g.globalAlpha=1;return;
+      }
+      const v=world(f).map(S);
+      if(f.kind!=='seg'){
+        g.fillStyle=pal.fill;g.beginPath();v.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fill();
+      }
+      const n=f.kind==='seg'?1:v.length;
+      g.strokeStyle=pal.outline;g.lineWidth=lw+1.5;
+      for(let k=0;k<n;k++){const a=v[k],b=v[(k+1)%v.length];g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();}
+      g.lineWidth=lw;
+      for(let k=0;k<n;k++){const a=v[k],b=v[(k+1)%v.length];g.strokeStyle=css(sideColour(f,k,pal,true));g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();}
+      if(f.eye){
+        const sn=Math.sin(f.facing),cs=Math.cos(f.facing),r=f.local[0][1]*0.72,e=S([f.x+r*sn,f.y+r*cs]);
+        g.fillStyle=css(pal.ink);g.beginPath();g.arc(e[0],e[1],Math.max(1.5,sc*0.035),0,TAU);g.fill();
+      }
+      g.globalAlpha=1;
+    });
+    g.fillStyle=pal.observer;g.beginPath();g.arc(O[0],O[1],5,0,TAU);g.fill();
+  }
+
+  function startOf(phases,i){let t=0;for(let k=0;k<i;k++)t+=phases[k].ms;return t;}
+
+  // Chromatistes paints his house, his slaves, his father, his son and himself; then he turns,
+  // and the painted line shows his front where the colourless one only brightens and dims.
+  function setupChromatistes(el){
+    const top=el.querySelector('.top'),strip=el.querySelector('.strip'),grey=el.querySelector('.grey');
+    const eye={x:0,y:-3.3,dir:0,half:0.6,fog:0.9,near:2.2};
+    // While he turns, the neighbour steps closer and the view from above zooms in on him.
+    // The fog then thickens to Section VI's, scaled to his size: there it is 2.2 per unit of a
+    // figure's radius, with full brightness at its nearest point.
+    const BOX=[-2.9,2.9,-3.5,2.9],NEAR_BOX=[-1.4,1.4,-1.85,0.8],NEAR_EYE=-1.6,NEAR_NEAR=1.1,NEAR_FOG=2.2/0.5;
+    const START=[0,0.7],HOME=[0,0],TURN0=-0.7;
+    const house=figure(regular(5,1.05),-1.65,1.55,Math.PI,['red','gamboge','green','blue','purple']);
+    const slaves=[figure(isosceles(0.75,0.2),1.35,1.75,-2.3,['orange','umber','teal']),
+                  figure(isosceles(0.75,0.2),1.9,0.95,-2.0,['teal','umber','orange'])];
+    const father=figure(regular(4,0.42),-1.35,-0.3,0.5,['blue','gamboge','red','green']);
+    const son=figure(regular(6,0.38),0.95,2.35,2.6,['rose','green','gamboge','blue','red','teal']);
+    const him=figure(regular(5,0.5),START[0],START[1],TURN0,['red','gamboge','green','blue','purple'],{eye:true});
+    const order=[[house],slaves,[father],[son],[him]];
+    const figs=[house,...slaves,father,son,him];
+
+    const PHASES=P.pace([
+      {ms:2400,text:'Every landscape is “nothing but a single line, with no varieties except degrees of brightness and obscurity.”'},
+      {ms:5000,paint:true,text:'Chromatistes paints “first his house, then his slaves, then his father, his sons, and grandsons, lastly himself.”'},
+      {ms:1600,clear:true,text:'He turns. Without colour the line only brightens and dims; painted, each side shows itself, and so does his front.'},
+      {ms:6400,turn:true,text:'He turns. Without colour the line only brightens and dims; painted, each side shows itself, and so does his front.'},
+      {ms:600,text:'“No one now needed to ‘feel’ him; no one mistook his front for his back.”'}
+    ],'text');
+
+    function draw(t){
+      const f=P.phaseAt(PHASES,t),i=f.index;
+      const paintP=i<1?0:i===1?f.p:1;
+      order.forEach((group,k)=>group.forEach(g=>{g.paint=P.ease(clamp(paintP*order.length-k,0,1));}));
+      const clear=i<2?0:i===2?P.ease(f.p):1;
+      [house,...slaves,father,son].forEach(g=>{g.alpha=1-clear;});
+      him.x=START[0]+(HOME[0]-START[0])*clear;him.y=START[1]+(HOME[1]-START[1])*clear;
+      eye.y=-3.3+(NEAR_EYE+3.3)*clear;eye.near=2.2+(NEAR_NEAR-2.2)*clear;eye.fog=0.9+(NEAR_FOG-0.9)*clear;
+      const box=BOX.map((v,k)=>v+(NEAR_BOX[k]-v)*clear);
+      const turn=i<3?0:i===3?P.ease(f.p):1;
+      him.facing=TURN0+TAU*turn;
+      const pal=palette();
+      drawTop(top,box,figs,eye,pal);
+      drawStrip(strip,view(figs,eye,pal,true),pal);
+      drawStrip(grey,view(figs,eye,pal,false),pal);
+      return f.phase.text;
+    }
+    return{PHASES,draw};
+  }
+
+  // Fog scaled to a figure of radius r: brightness falls by e^-k over each radius beyond the
+  // nearest point (k is 2.2 in Section VI), so each figure shows its own fade. Crowds pass in one
+  // file at distance d in front of the observer, out of the fog on the left and back into it.
+  function streetEye(y,d,r,half,k){return{x:0,y,dir:0,half,fog:k/r,near:d-r};}
+  // A little lighter than Section VI, so the colours of a whole crowd still read.
+  const CROWD_FOG=1.6;
+
+  // Colour spreads through Flatland on the timetable Section VIII gives, seen as passers-by walking
+  // left to right along a street, out of the fog and back into it: whoever walks in wears the fashion of the moment, and anyone already in the street
+  // takes it up soon after, until only the women (lines) and the Priests (circles) are colourless.
+  function setupSpread(el){
+    const top=el.querySelector('.top'),strip=el.querySelector('.strip'),when=el.querySelector('.when');
+    const RF=0.34,EDGE=2.6;
+    const eye=streetEye(-1.6,2.6,RF,0.72,CROWD_FOG);
+    const BOX=[-EDGE,EDGE,-1.9,1.75];
+    const R=rng(8);
+    const pick=n=>{const out=[];const pool=BRIGHT.slice();for(let k=0;k<n;k++){const j=Math.floor(R()*pool.length);out.push(pool[j]);if(pool.length>1&&n<=pool.length)pool.splice(j,1);}return out;};
+    // Wave: 0 = week, 1 = month or two, 2 = year, 3 = two generations, null = never.
+    const KINDS={
+      iso:{make:()=>isosceles(0.74,0.22),n:3,wave:0},tri:{make:()=>regular(3,RF),n:3,wave:0},
+      sq:{make:()=>regular(4,RF),n:4,wave:0},pent:{make:()=>regular(5,RF),n:5,wave:0},
+      dodec:{make:()=>regular(12,RF),n:12,wave:1},noble:{make:()=>regular(16,RF),n:16,wave:2},
+      highest:{make:()=>regular(24,RF),n:24,wave:3},woman:{wave:null},priest:{wave:null}
+    };
+
+    const PHASES=P.pace([
+      {ms:3200,wave:0,when:'Within a week',text:'“Before a week was over, every Square and Triangle in the district had copied the example of Chromatistes.”'},
+      {ms:2600,wave:1,when:'A month or two',text:'“A month or two found even the Dodecagons infected with the innovation.”'},
+      {ms:2400,wave:2,when:'Within a year',text:'“A year had not elapsed before the habit had spread to all but the very highest of the nobility.”'},
+      {ms:2400,wave:3,when:'Two generations',text:'Within two generations “no one in all Flatland was colourless except the women and the Priests.”'},
+      {ms:600,wave:3,when:'Two generations',text:'“The Priests and the women alone still remained pure from the pollution of paint.”'}
+    ],'text');
+    const TOTAL=P.total(PHASES)/1000;
+    // The first wave waits a moment so the street is seen colourless.
+    const LEAD=0.7;
+    const waveStart=[LEAD];[1,2,3].forEach(w=>{waveStart.push(startOf(PHASES,PHASES.findIndex(p=>p.wave===w))/1000);});
+    function era(sec){let e=-1;waveStart.forEach((s0,w)=>{if(sec>=s0)e=w;});return e;}
+    // Someone already in the street takes up the new fashion this long after it arrives.
+    const CATCH=1.0,CATCH_MS=0.8;
+
+    // One file at a steady pace with uneven gaps, so no one overtakes and everyone stays at the same depth.
+    const LANES=[
+      {d:2.6,speed:0.5,every:2.3,kinds:['sq','priest','dodec','woman','tri','noble','iso','priest','highest','pent','woman','dodec','sq','noble','tri','woman','priest','iso']}
+    ];
+    const walkers=[];
+    LANES.forEach(lane=>{
+      const entries=[];
+      for(let entry=-2*EDGE/lane.speed;entry<TOTAL;entry+=lane.every*(0.8+R()*0.4))entries.push(entry);
+      // The last frame, which closes on the women and the Priests, shows a Priest in front of
+      // the observer with a woman a little behind him.
+      const at=(e,x)=>Math.abs(-EDGE+lane.speed*(TOTAL-e)-x);
+      const nearest=x=>entries.reduce((b,e,i)=>at(e,x)<at(entries[b],x)?i:b,0);
+      const fixed={};fixed[nearest(0)]='priest';fixed[nearest(-1.2)]='woman';
+      let k=0;
+      entries.forEach((entry,i)=>{
+        const kind=fixed[i]||lane.kinds[k++%lane.kinds.length],K=KINDS[kind];
+        let f;
+        if(kind==='woman')f={kind:'seg',local:[[0,RF],[0,-RF]],cols:null};
+        else if(kind==='priest')f={kind:'circle',r:RF,cols:null};
+        else f=figure(K.make(),0,0,0,pick(K.n));
+        Object.assign(f,{x:0,y:0,facing:0,paint:0,alpha:0,lane,entry,wave:K.wave,speed:lane.speed});
+        // A woman is drawn as her own line, as near as the others' nearest points.
+        f.d=kind==='woman'?lane.d-RF:lane.d;
+        walkers.push(f);
+      });
+    });
+
+    function draw(t){
+      const f=P.phaseAt(PHASES,t),sec=t/1000;
+      walkers.forEach(g=>{
+        const x=-EDGE+g.speed*(sec-g.entry);
+        if(Math.abs(x)>EDGE){g.alpha=0;return;}
+        g.x=x;g.y=eye.y+g.d;g.facing=Math.PI/2;
+        g.alpha=clamp((EDGE-Math.abs(x))/0.3,0,1);
+        if(g.wave===null){g.paint=0;return;}
+        if(g.wave<=era(g.entry)){g.paint=1;return;}
+        const since=waveStart[g.wave]===undefined?-1:sec-waveStart[g.wave]-CATCH;
+        g.paint=g.wave<=era(sec)?P.ease(clamp(since/CATCH_MS,0,1)):0;
+      });
+      when.textContent=f.phase.when;
+      const pal=palette();
+      drawTop(top,BOX,walkers,eye,pal);
+      drawStrip(strip,view(walkers,eye,pal,true),pal);
+      return f.phase.text;
+    }
+    return{PHASES,draw};
+  }
+
+  // The review: each corps marches left to right along a straight line in front of the commander. The Isosceles face about,
+  // then the Equilateral militia, the Square artillery and the Pentagons and Hexagons pass, each
+  // in the colours Section VIII names.
+  function setupReview(el){
+    const top=el.querySelector('.top'),strip=el.querySelector('.strip');
+    const D=3.6,RF=0.36,SPAN=2.0,EDGE=3.1,OFF=2*EDGE,LOOP=OFF+0.8;
+    const eye=streetEye(-1.6,D,RF,0.66,CROWD_FOG);
+    const BOX=[-EDGE,EDGE,-1.9,2.7];
+    const R=rng(21);
+    const PHASES=P.pace([
+      {ms:2600,text:'A line of battle of Isosceles, their bases toward the commander: a row of sombre black.'},
+      {ms:900,text:'“Suddenly facing about, and exchanging the sombre black of their bases for the orange and purple of the two sides including their acute angle.”'},
+      {ms:3000,text:'“The militia of the Equilateral Triangles tricoloured in red, white, and blue.”'},
+      {ms:3000,text:'“The mauve, ultramarine, gamboge, and burnt umber of the Square artillerymen rapidly rotating near their vermilion guns.”'},
+      {ms:3400,text:'“The dashing and flashing of the five-coloured and six-coloured Pentagons and Hexagons careering across the field.”'},
+      {ms:600,text:'An illustrious Circle “threw aside his marshal’s baton and his royal crown,” to take up “the artist’s pencil.”'}
+    ],'text');
+    const T=PHASES.map((_,i)=>startOf(PHASES,i));
+
+    // Each corps holds slots along the line; shift moves the whole corps along it.
+    // face is a world direction shared by the whole corps, as in a line of battle, so the
+    // commander sees the figures toward either end obliquely.
+    function corps(list){return list.map((f,k)=>Object.assign(f,{slot:-SPAN+2*SPAN*k/(list.length-1)}));}
+    function place(list,shift,face){
+      list.forEach(g=>{
+        g.x=g.slot+shift;g.y=eye.y+D-(g.inset||0);
+        if(face!==undefined)g.facing=face;
+        g.alpha=clamp((EDGE-Math.abs(g.x))/0.3,0,1);
+      });
+    }
+    const iso=corps(Array.from({length:7},()=>figure(isosceles(0.95,0.44),0,0,0,['orange','black','purple'],{paint:1})));
+    const tri=corps(Array.from({length:6},()=>figure(regular(3,RF),0,0,0,['red','white','blue'],{paint:1})));
+    const art=corps(Array.from({length:8},(_,k)=>k%2
+      ?figure([[0.08,0.36],[0.08,-0.36],[-0.08,-0.36],[-0.08,0.36]],0,0,0,['vermilion','vermilion','vermilion','vermilion'],{paint:1,gun:true})
+      :figure(regular(4,RF),0,0,0,['mauve','ultramarine','gamboge','umber'],{paint:1,spin:k%4?-1:1})));
+    const dash=Array.from({length:6},(_,k)=>{
+      const n=k%2?6:5,cols=n===5?['red','gamboge','green','blue','purple']:['rose','orange','gamboge','teal','ultramarine','green'];
+      // One file at a dash, unevenly spaced, so they never run into each other. They come on from
+      // the left behind the departing artillery, and each comes round again after leaving.
+      return figure(regular(n,RF*0.9),0,0,0,cols,{paint:1,offset:k*LOOP/6+R()*0.3,spin:(R()<0.5?-1:1)*(2+R()*2)});
+    });
+    const figs=[...iso,...tri,...art,...dash];
+
+    function draw(t){
+      const f=P.phaseAt(PHASES,t),i=f.index;
+      // The Isosceles stand with apex away (bases toward the commander), then face about, then march off.
+      const face=i<1?0:i===1?P.ease(f.p):1;
+      const isoOut=i<2?0:i===2?P.ease(f.p):1;
+      place(iso,isoOut*OFF,Math.PI*face);
+      const triIn=i<2?0:i===2?P.ease(f.p):1,triOut=i<3?0:i===3?P.ease(f.p):1;
+      place(tri,-OFF*(1-triIn)+OFF*triOut,Math.PI);
+      if(i<2)tri.forEach(g=>{g.alpha=0;});
+      const artIn=i<3?0:i===3?P.ease(f.p):1,artOut=i<4?0:i===4?P.ease(f.p):1;
+      place(art,-OFF*(1-artIn)+OFF*artOut);
+      const sinceArt=Math.max(0,t-T[3])/1000;
+      art.forEach(g=>{g.facing=g.gun?0:g.spin*sinceArt*2.4;});
+      if(i<3)art.forEach(g=>{g.alpha=0;});
+      const sinceDash=Math.max(0,t-T[4])/1000;
+      dash.forEach(g=>{
+        const run=2*Math.max(0,sinceDash-0.5)-g.offset;g.x=run<0?-EDGE-1:-EDGE-0.4+run%LOOP;g.y=eye.y+D;g.facing=g.spin*sinceDash;
+        g.alpha=i<4?0:clamp((EDGE-Math.abs(g.x))/0.3,0,1);
+      });
+      const pal=palette();
+      drawTop(top,BOX,figs,eye,pal);
+      drawStrip(strip,view(figs,eye,pal,true),pal);
+      return f.phase.text;
+    }
+    return{PHASES,draw};
+  }
+
+  const SCENES={chromatistes:setupChromatistes,spread:setupSpread,review:setupReview};
+  // ?scene=chromatistes|spread|review shows one scene, so each can sit beside its own paragraph.
+  const only=new URLSearchParams(location.search).get('scene');
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[only]&&id!==only){el.hidden=true;return;}
+    const s=SCENES[id](el);
+    P.create({duration:P.total(s.PHASES),draw:s.draw,stage:el.querySelector('.stage'),button:el.querySelector('.foot button'),
+      caption:el.querySelector('.caption'),steps:P.steps(s.PHASES,'text')});
+  });
+})();
+</script>
+</body>
+</html>
