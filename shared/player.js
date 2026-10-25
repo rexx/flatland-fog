@@ -14,13 +14,24 @@
   // steps (from steps()) adds previous and next buttons around the play button that move
   // between captions: while playing they jump to a caption's start and play on; otherwise
   // they show the caption's finished frame and wait.
+  // A timeline slider along the bottom of the button's .panel scrubs to any moment and pauses there.
   function create(opts){
     const{duration,draw,stage,button,caption,steps}=opts;
     let status='ready',clock=0,last=null;
     let text=null,words=[],shownAt=0;
+    const panel=button.closest('.panel');
+    let scrub=null;
+    if(panel){
+      scrub=document.createElement('input');
+      scrub.type='range';scrub.className='player-scrub';
+      scrub.min='0';scrub.max=String(duration);scrub.step='10';scrub.value='0';
+      scrub.setAttribute('aria-label','Timeline');
+      panel.append(scrub);
+    }
 
     function render(){
       const t=Math.min(clock,duration),next=draw(t);
+      if(scrub)scrub.value=String(t);
       if(!caption||typeof next!=='string')return;
       if(next!==text){
         text=next;shownAt=status==='playing'?t:-Infinity;
@@ -76,6 +87,11 @@
       nav.append(step('‹','Previous sentence',-1),button,step('›','Next sentence',1));
     }
 
+    if(scrub)scrub.addEventListener('input',()=>{
+      clock=Math.max(0,Math.min(duration,parseFloat(scrub.value)));
+      setStatus(clock>=duration?'done':'paused');
+      render();reveal();render();
+    });
     button.addEventListener('click',press);
     stage.addEventListener('click',press);
     window.addEventListener('resize',render);
