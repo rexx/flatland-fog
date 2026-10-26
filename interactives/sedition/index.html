@@ -225,8 +225,12 @@
   function setupDisguise(el){
     const tops=[...el.querySelectorAll('.top')],cols=[...el.querySelectorAll('.colour')],greys=[...el.querySelectorAll('canvas.grey')];
     const greyLabels=[...el.querySelectorAll('.label.grey')];
-    const FOG=2.2,eye={x:0,y:-G.D,dir:0,half:G.FIELD_HALF,fog:FOG,near:G.D-G.R};
-    const FIGS={dodecagon:{spec:{kind:'12'},th0:-15},isosceles:{spec:{kind:'iso',apex:4},th0:90}};
+    // A lighter fog than Section VI, so the colours still read across the whole line.
+    const FOG=1.2,eye={x:0,y:-G.D,dir:0,half:G.FIELD_HALF,fog:FOG,near:G.D-G.R};
+    // The needle turns about the middle of his long sides, set as near the maiden as the
+    // Dodecagon's front and shortened to look as wide side on, so the two lines start alike.
+    const NEEDLE_Y=-0.85,NEEDLE_K=(G.D+NEEDLE_Y)*Math.tan(Math.asin(G.R/G.D));
+    const FIGS={dodecagon:{spec:{kind:'12'},th0:-15,k:1,dy:0},isosceles:{spec:{kind:'iso',apex:4},th0:90,k:NEEDLE_K,dy:NEEDLE_Y}};
     const PHASES=P.pace([
       {ms:3200,step:0,text:'In the days of the Colour Bill “the Art of Sight Recognition, being no longer needed, was no longer practised.” A Dodecagon is known by his twelve colours.'},
       {ms:4000,step:1,text:'“An Isosceles of a low type, with a brain little if at all above four degrees … painted himself, or caused himself to be painted … with the twelve colours of a Dodecagon.”'},
@@ -244,7 +248,7 @@
       const pal=palette();
       ['dodecagon','isosceles'].forEach((name,i)=>{
         const F=FIGS[name],th=F.th0+turn*360;
-        const verts=G.verts(F.spec,th);
+        const verts=G.verts(F.spec,th).map(([x,y])=>[x*F.k,y*F.k+F.dy]);
         const shape={verts,paint:perimeterPaint(verts),coat:name==='dodecagon'?1:coat,alpha:1,bands:name==='dodecagon'?1:6};
         // From above: the figure and the maiden's eye below it.
         const c=tops[i];
