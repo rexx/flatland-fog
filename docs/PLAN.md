@@ -78,4 +78,4 @@ Standard Ebooks 版共 10 張，已重繪為 SVG，放在 `illustrations/`。
 | M1 骨架 | 23 頁閱讀頁與目錄頁、插圖、共用模組、§1 與 §6 互動元件、辨認遊戲（英文、灰階）；推上 GitHub 並開 Pages | 完成 |
 | M2 第一批元件 | passing-through（§14、§16）、view-from-above（§18） | 完成 |
 | M3 第二批元件 | P2 元件，依興趣挑選 | 完成：house-and-rain、lineage、meeting-a-woman、feeling、colour-revolt、colour-bill、lineland、dimension-ladder |
-| M4 收尾 | P3 元件、手機版面檢查、README 截圖 | 完成：irregular（§7）、pointland（§20）、手機版面檢查（375px 無水平溢出，並修正 dimension-ladder 深色模式的立方體光影）；未做：README 截圖 |
+| M4 收尾 | P3 元件、手機版面檢查、README 截圖 | 完成：irregular（§7）、pointland（§20）、手機版面檢查（375px 無水平溢出，並修正 dimension-ladder 深色模式的立方體光影）、README 截圖（`docs/screenshots/`：封面為 §1，另有 §6、§8、§16、§20 四張） |

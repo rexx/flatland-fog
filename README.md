@@ -4,6 +4,15 @@ An interactive reading of *Flatland: A Romance of Many Dimensions* (Edwin A. Abb
 
 The site stays black and white like the book's ink plates. Colour appears for the first time in the sections about the Colour Bill (VIII to X).
 
+![Section I: the eye sinks to the edge of the table and the triangle flattens towards a line](docs/screenshots/coin-on-table.png)
+
+| | |
+|---|---|
+| ![Section VI: a Merchant seen through the fog, his line dimming fast on either side of the bright corner](docs/screenshots/recognition-by-sight.png) | ![Section VIII: the army passes in review in the colours the book names](docs/screenshots/colour-revolt.png) |
+| VI · Recognition by sight | VIII · The Colour Revolt |
+| ![Section XVI: the Sphere rises out of Flatland and his section shrinks](docs/screenshots/passing-through.png) | ![Section XX: the Square shouts at the King of Pointland](docs/screenshots/pointland.png) |
+| XVI · The Sphere rises out of Flatland | XX · Pointland |
+
 ## Run it
 
 It is a static site with no build step. Serve the folder with any static server:
@@ -25,6 +34,7 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | `shared/` | Theme, geometry, canvas drawing, the 3D slab renderer and the play-once animation player shared by the interactives |
 | `tools/import_text.py` | Regenerates `read/` and `index.html` from the Standard Ebooks source |
 | `docs/PLAN.md` | Plan: which section gets which interactive, and the milestones |
+| `docs/screenshots/` | The screenshots in this README, taken at a fixed moment with `?embed=1&t=<ms>` |
 
 ## Interactives
 
