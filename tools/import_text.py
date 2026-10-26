@@ -65,6 +65,14 @@ EMBEDS = {
         {"after": "text:contemplating one of his sides", "slug": "recognition-by-sight",
          "query": "scene=grandson", "title": "A hexagonal grandson"},
     ],
+    7: [
+        {"after": "text:relapse into barbarism", "slug": "irregular", "query": "scene=groping",
+         "title": "A tedious groping"},
+        {"after": "text:sticking fast in your house door", "slug": "irregular", "query": "scene=door",
+         "title": "A monster in the door"},
+        {"after": "text:confiding tradesman", "slug": "irregular", "query": "scene=impostor",
+         "title": "Polygonal front foremost"},
+    ],
     8: [
         {"after": "text:turned his variegated frame", "slug": "colour-revolt", "query": "scene=chromatistes",
          "title": "Chromatistes paints himself"},
@@ -102,6 +110,14 @@ EMBEDS = {
          "title": "The Sphere builds a Cube"},
         {"after": "text:must have 8 bounding Cubes", "slug": "dimension-ladder", "query": "scene=analogy",
          "title": "Strictly according to Analogy"},
+    ],
+    20: [
+        {"after": "text:something under twenty human diagonals", "slug": "pointland", "query": "scene=approach",
+         "title": "The abyss of no dimensions"},
+        {"after": "text:the happiness of being", "slug": "pointland", "query": "scene=soliloquy",
+         "title": "It is; and there is none else beside It"},
+        {"after": "text:rescue him from his self-satisfaction", "slug": "pointland", "query": "scene=harangue",
+         "title": "The King of Pointland"},
     ],
 }
 

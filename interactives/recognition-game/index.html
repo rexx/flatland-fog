@@ -66,6 +66,7 @@
           <option value="30">30-gon</option>
           <option value="0">Circle</option>
           <option value="irr">Irregular pentagon</option>
+          <option value="tpb">Triangular front, polygonal back</option>
         </select>
         <button id="play" aria-pressed="false">Turn</button>
       </div>
@@ -132,13 +133,17 @@
   const G=FlatlandGeometry,C=FlatlandCanvas;
   const $=id=>document.getElementById(id);
   const COLS=420,SPEED=1.2,ELEV_ANIM_MS=700;
-  const LABELS={seg:'Straight line',iso:'Isosceles triangle',sca:'Scalene triangle','3':'Equilateral triangle','4':'Square','5':'Pentagon','6':'Hexagon','8':'Octagon','12':'Dodecagon','30':'30-gon','0':'Circle',irr:'Irregular pentagon'};
+  const LABELS={seg:'Straight line',iso:'Isosceles triangle',sca:'Scalene triangle','3':'Equilateral triangle','4':'Square','5':'Pentagon','6':'Hexagon','8':'Octagon','12':'Dodecagon','30':'30-gon','0':'Circle',irr:'Irregular pentagon',tpb:'Triangular front, polygonal back'};
   const FIXED_SCA=[-90,10,130];
   const FIXED_IRR=[[-90,1],[-20,0.82],[55,1],[150,0.9],[205,0.97]];
+  // Section VII's "man with a triangular front and a polygonal back": a 60 degree front corner
+  // on an irregular nine-sided body, as [degrees, radius].
+  const FIXED_TPB=[[0,-1],[0.55,-0.047],[0.62,0.25],[0.45,0.55],[0.15,0.68],[-0.2,0.66],[-0.48,0.5],[-0.62,0.2],[-0.55,-0.047]]
+    .map(([x,y])=>[Math.atan2(y,x)*180/Math.PI,Math.hypot(x,y)]);
   const reduceMotion=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
   const CURVE_LABELS={bright:'near',dim:'far'};
 
-  const INFO={seg:'Two-fold rotational symmetry, two mirror lines: two cycles per turn, mirror-symmetric curves',iso:'No rotational symmetry, one mirror line: one cycle per turn, mirror-symmetric curves',sca:'No symmetry: one cycle per turn, lopsided curves',irr:'No symmetry: one cycle per turn, lopsided curves','0':'Looks the same at every angle'};
+  const INFO={seg:'Two-fold rotational symmetry, two mirror lines: two cycles per turn, mirror-symmetric curves',iso:'No rotational symmetry, one mirror line: one cycle per turn, mirror-symmetric curves',sca:'No symmetry: one cycle per turn, lopsided curves',irr:'No symmetry: one cycle per turn, lopsided curves',tpb:'Its front corner feels like a Triangle, its back looks like a Polygon: no single angle tells what it is','0':'Looks the same at every angle'};
   function info(kind){
     if(INFO[kind])return INFO[kind];
     const n=parseInt(kind,10);
@@ -148,7 +153,7 @@
   // Explore -----------------------------------------------------------------
   const ex={theta:0,playing:false,mode:'1d',info:'top',cache:null,cacheKey:'',elevShown:0,anim:null};
   let slab=null;
-  function spec(){return{kind:$('shape').value,apex:parseFloat($('apex').value),sca:FIXED_SCA,irr:FIXED_IRR};}
+  function spec(){return{kind:$('shape').value,apex:parseFloat($('apex').value),sca:FIXED_SCA,irr:FIXED_IRR,tpb:FIXED_TPB};}
 
   function drawExplore(){
     const s=spec(),kind=s.kind,k=parseFloat($('fog').value);
@@ -204,7 +209,7 @@
   }
 
   // Test --------------------------------------------------------------------
-  const QUIZ_KINDS=['seg','iso','sca','3','4','5','6','8','12','0','irr'];
+  const QUIZ_KINDS=['seg','iso','sca','3','4','5','6','8','12','0','irr','tpb'];
   const qz={theta:0,playing:true,cur:null,answered:false,right:0,total:0,qn:1,dir:1};
   const rnd=(a,b)=>a+Math.random()*(b-a);
 
@@ -214,7 +219,7 @@
     let s;
     do{s=[-90,rnd(-40,60),rnd(100,200)];}
     while(Math.min(s[1]+90,s[2]-s[1],270-s[2])<40||Math.abs((s[1]+90)-(270-s[2]))<15||Math.abs((s[2]-s[1])-(s[1]+90))<15||Math.abs((s[2]-s[1])-(270-s[2]))<15);
-    return{kind,apex:Math.round(rnd(8,40)),sca:s,irr:[[-90,1],[rnd(-35,-5),rnd(0.78,0.92)],[rnd(40,70),1],[rnd(135,165),rnd(0.85,0.95)],[rnd(195,225),rnd(0.9,1)]]};
+    return{kind,apex:Math.round(rnd(8,40)),sca:s,irr:[[-90,1],[rnd(-35,-5),rnd(0.78,0.92)],[rnd(40,70),1],[rnd(135,165),rnd(0.85,0.95)],[rnd(195,225),rnd(0.9,1)]],tpb:FIXED_TPB};
   }
   function buildAnswers(){
     const box=$('answers');box.textContent='';

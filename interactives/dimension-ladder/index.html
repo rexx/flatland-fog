@@ -137,8 +137,12 @@
       }
       if(solid>0){
         g.globalAlpha=solid;g.strokeStyle=tint(paper,ink,0.9);g.lineWidth=1.5;g.lineJoin='round';
+        // Light falls from the upper left in both themes: each face's number is how far it is
+        // shaded from the lighter of paper and ink towards the darker, deeper on a dark page.
+        const sum=c=>c[0]+c[1]+c[2],darkPage=sum(paper)<sum(ink);
+        const lit=darkPage?ink:paper,shadow=darkPage?paper:ink,deeper=darkPage?0.35:0;
         [[[0,1,0],[1,1,0],[1,1,1],[0,1,1],0.12],[[1,0,0],[1,0,1],[1,1,1],[1,1,0],0.42],[[0,0,0],[1,0,0],[1,1,0],[0,1,0],0.24]].forEach(face=>{
-          poly(g,S,face.slice(0,4).map(p=>at(...p)));g.fillStyle=tint(paper,ink,face[4]);g.fill();g.stroke();
+          poly(g,S,face.slice(0,4).map(p=>at(...p)));g.fillStyle=tint(lit,shadow,face[4]+deeper);g.fill();g.stroke();
         });
       }
       g.globalAlpha=1;

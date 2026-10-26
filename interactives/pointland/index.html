@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pointland · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none;display:block}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.scenes{display:flex;flex-direction:column;gap:24px}
+.embedded .head,.embedded .panel h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/20-how-the-sphere-encouraged-me-in-a-vision.html">← Section XX · How the Sphere Encouraged Me in a Vision</a>
+    <h1>Pointland</h1>
+    <p>In a dream the Sphere takes the Square down to the lowest depth of existence: a Point that is its own world, and takes every voice it hears for its own thought.</p>
+  </header>
+
+  <div class="scenes">
+    <section class="panel" id="approach">
+      <h2>The abyss of no dimensions</h2>
+      <div class="stage">
+        <div class="label">In Spaceland, from the side</div>
+        <canvas class="paper view" style="height:clamp(170px,36vw,220px)" role="img" aria-label="The Sphere and the Square float towards a tiny bright Point; its faint humming reaches them only once they are within twenty diagonals of it"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="soliloquy">
+      <h2>It is; and there is none else beside It</h2>
+      <div class="stage">
+        <div class="label">Pointland, as the Point knows it</div>
+        <canvas class="paper loop" style="height:clamp(220px,52vw,260px)" role="img" aria-label="The Point alone; what it thinks it utters, what it utters it hears, and what it hears it thinks, round and round, with nothing outside"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="harangue">
+      <h2>The King of Pointland</h2>
+      <div class="stage">
+        <div class="label">In Spaceland</div>
+        <canvas class="paper view" style="height:clamp(150px,30vw,180px)" role="img" aria-label="The Square shouts at the Point; the sound reaches it and the Point shines brighter than before"></canvas>
+        <div class="label">What the Point hears</div>
+        <canvas class="paper heard" style="height:96px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const C=FlatlandCanvas,P=FlatlandPlayer;
+  const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+  const TAU=2*Math.PI;
+  const clamp01=v=>Math.max(0,Math.min(1,v));
+
+  function bind(el,phases,draw){
+    P.create({
+      duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('button'),
+      caption:el.querySelector('.caption'),steps:P.steps(phases,'text'),
+      draw:t=>draw(P.phaseAt(phases,t),t)
+    });
+  }
+
+  // Centred labels are kept inside the canvas on narrow screens.
+  function label(g,text,x,y,align,strong){
+    g.font=MONO;g.fillStyle=C.token(strong?'--ink':'--muted');g.textAlign=align||'center';
+    if(g.textAlign==='center'){
+      const half=g.measureText(text).width/2+4;
+      x=Math.max(half,Math.min(g.canvas.clientWidth-half,x));
+    }
+    g.fillText(text,x,y);g.textAlign='left';
+  }
+
+  // The Point: an infinitesimal dot inside a soft halo whose size is its lustre (0 to 1).
+  function drawPoint(g,x,y,lustre){
+    const r=6+lustre*26;
+    const halo=g.createRadialGradient(x,y,0,x,y,r);
+    halo.addColorStop(0,C.token('--ink'));halo.addColorStop(1,'rgba(128,128,128,0)');
+    g.globalAlpha=0.18+0.32*lustre;g.fillStyle=halo;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();
+    g.globalAlpha=1;g.fillStyle=C.token('--ink');g.beginPath();g.arc(x,y,2,0,TAU);g.fill();
+  }
+
+  // The Sphere seen from the side: a disc lit from the upper left.
+  function drawSphere(g,x,y,r){
+    g.fillStyle=C.token('--paper-2');g.beginPath();g.arc(x,y,r,0,TAU);g.fill();
+    // Fixed white and black washes, so the light comes from the same side in both themes.
+    const light=g.createRadialGradient(x-r*0.35,y-r*0.35,0,x-r*0.35,y-r*0.35,r*0.9);
+    light.addColorStop(0,'rgba(255,255,255,0.75)');light.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle=light;g.fill();
+    const dark=g.createRadialGradient(x,y,r*0.55,x,y,r);
+    dark.addColorStop(0,'rgba(0,0,0,0)');dark.addColorStop(1,'rgba(0,0,0,0.35)');
+    g.fillStyle=dark;g.fill();
+    g.strokeStyle=C.token('--ink');g.lineWidth=1.5;g.stroke();
+  }
+
+  function drawSquare(g,x,y,side){
+    g.fillStyle=C.token('--paper-2');g.strokeStyle=C.token('--ink');g.lineWidth=1.5;
+    g.beginPath();g.rect(x-side/2,y-side/2,side,side);g.fill();g.stroke();
+  }
+
+  // Sound spreading out from (x,y): count rings, each living period ms and reaching maxR.
+  function rings(g,x,y,t,period,maxR,count,strength,from,to){
+    g.strokeStyle=C.token('--ink');g.lineWidth=1;
+    for(let k=0;k<count;k++){
+      const q=((t/period)+k/count)%1;
+      g.globalAlpha=(1-q)*0.6*strength;
+      g.beginPath();g.arc(x,y,2+q*maxR,from===undefined?0:from,to===undefined?TAU:to);g.stroke();
+    }
+    g.globalAlpha=1;
+  }
+
+  // The Sphere and the Square float towards the Point and stop when its humming reaches them.
+  function setupApproach(el){
+    const view=el.querySelector('.view');
+    // Distance from the Point in human diagonals; the hum carries only twenty.
+    const START=100,STOP=19,HEARD=20;
+    const PHASES=P.pace([
+      {ms:2400,move:0,text:'In a dream the Square moves with the Sphere towards “a bright but infinitesimally small Point.”'},
+      {ms:5200,move:1,text:'A slight humming comes from it, so slight that it reaches them only “at a distance from it of something under twenty human diagonals.”'},
+      {ms:2600,move:2,text:'“I conduct thee downward to the lowest depth of existence, even to the realm of Pointland, the abyss of no dimensions.”'}
+    ],'text');
+
+    function draw(f,t){
+      const k=f.phase.move===0?0:f.phase.move===1?P.ease(f.p):1;
+      const d=START+(STOP-START)*k;
+      const[g,w,h]=C.setup(view);
+      const px=w*0.84,py=h*0.52,unit=(px-w*0.2)/START;
+      // How far the hum carries, drawn as a dashed circle around the Point.
+      g.setLineDash([4,4]);g.strokeStyle=C.token('--line-strong');g.lineWidth=1;
+      g.beginPath();g.arc(px,py,HEARD*unit,0,TAU);g.stroke();g.setLineDash([]);
+      label(g,'20 diagonals',px,py+HEARD*unit+14,'center');
+      rings(g,px,py,t,1400,HEARD*unit,4,0.6);
+      drawPoint(g,px,py,0.2);
+      label(g,'the Point',px,py-HEARD*unit-6);
+      // The travellers: the Square just below the Sphere, both at the same distance from the Point.
+      const tx=px-d*unit,sr=Math.min(h*0.14,w*0.06);
+      drawSphere(g,tx,py-sr*0.7,sr);
+      drawSquare(g,tx,py+sr*0.75,sr*0.6);
+      label(g,'the Sphere',tx-sr-6,py-sr*0.7+4,'right');
+      label(g,'the Square',tx-sr*0.3-6,py+sr*0.75+4,'right');
+      const heard=d<HEARD;
+      label(g,'distance '+String(Math.round(d)).padStart(2,' ')+' diagonals',8,16,'left');
+      label(g,heard?'the hum: heard':'the hum: silent',8,32,'left',heard);
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // The Point alone, with what it thinks, utters and hears going round and coming back to itself.
+  function setupSoliloquy(el){
+    const loop=el.querySelector('.loop');
+    // Three stations around the Point, each both an act and what it makes.
+    const STATIONS=[['thinker','thought'],['utterer','word'],['hearer','audition']];
+    const PHASES=P.pace([
+      {ms:2800,lit:0,text:'“Infinite beatitude of existence! It is; and there is none else beside It.”'},
+      {ms:2600,lit:0,text:'By “It” he means himself: “babies and babyish people who cannot distinguish themselves from the world, speak of themselves in the third person.”'},
+      {ms:5400,lit:1,text:'“What It thinks, that It utters; and what It utters, that It hears.”'},
+      {ms:3600,lit:2,text:'“It itself is thinker, utterer, hearer, thought, word, audition; it is the One, and yet the All in All.”'}
+    ],'text');
+
+    function draw(f,t){
+      const[g,w,h]=C.setup(loop);
+      const cx=w/2,cy=h*0.52,R=Math.min(h*0.34,w*0.3);
+      const at=j=>{const a=-Math.PI/2+TAU*j/3;return[cx+R*Math.cos(a),cy+R*Math.sin(a)];};
+      // Stations come in one by one while the loop is being told, then stay.
+      const shown=f.phase.lit===0?0:f.phase.lit===2?3:Math.min(3,Math.floor(f.p*3)+1);
+      // What It hears goes back to the thinker near the end of the telling.
+      const closed=f.phase.lit===2||f.phase.lit===1&&f.p>=0.95;
+      // The arrows from one station to the next, drawn along the circle.
+      g.strokeStyle=C.token('--line-strong');g.lineWidth=1.2;
+      // Each arrow appears once the station it points to is in; the last closes the loop.
+      for(let j=0;j<3;j++){
+        if(j<2?j+1>=shown:!closed)continue;
+        const a0=-Math.PI/2+TAU*j/3+0.32,a1=-Math.PI/2+TAU*(j+1)/3-0.32;
+        g.beginPath();g.arc(cx,cy,R,a0,a1);g.stroke();
+        const hx=cx+R*Math.cos(a1),hy=cy+R*Math.sin(a1),ta=a1+Math.PI/2;
+        g.fillStyle=C.token('--line-strong');g.beginPath();
+        g.moveTo(hx,hy);g.lineTo(hx-7*Math.cos(ta)+4*Math.cos(ta+Math.PI/2),hy-7*Math.sin(ta)+4*Math.sin(ta+Math.PI/2));
+        g.lineTo(hx-7*Math.cos(ta)-4*Math.cos(ta+Math.PI/2),hy-7*Math.sin(ta)-4*Math.sin(ta+Math.PI/2));g.closePath();g.fill();
+      }
+      // A pulse that keeps going round once the loop is closed.
+      if(closed){
+        const a=-Math.PI/2+(t/2400)*TAU;
+        g.fillStyle=C.token('--ink');g.beginPath();g.arc(cx+R*Math.cos(a),cy+R*Math.sin(a),3.5,0,TAU);g.fill();
+      }
+      STATIONS.forEach(([act,made],j)=>{
+        if(j>=shown)return;
+        // Labels sit outside the circle: above the top station, beside the lower two.
+        const[x,y]=at(j),side=j===0?'center':j===1?'left':'right',lx=j===0?x:j===1?x+12:x-12;
+        label(g,act,lx,j===0?y-18:y+4,side,true);
+        label(g,made,lx,j===0?y-4:y+18,side);
+      });
+      drawPoint(g,cx,cy,0.35+0.1*Math.sin(t/500));
+      label(g,'It',cx,cy+22);
+      label(g,'others: none',8,16,'left');
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // The Square shouts; the Point hears a voice, takes it for its own thought and shines brighter.
+  function setupHarangue(el){
+    const view=el.querySelector('.view'),heard=el.querySelector('.heard');
+    const WORDS='“you are the nothing”';
+    const PHASES=P.pace([
+      {ms:3800,step:0,text:'The Square raises his voice to the uttermost: “Silence, silence, contemptible creature. You call yourself the All in All, but you are the nothing.”'},
+      {ms:2800,step:1,text:'The Monarch “beamed more brightly than ever upon hearing my words.”'},
+      {ms:3000,step:2,text:'“Its own thought coming to Itself, suggestive of Its disparagement, thereby to enhance Its happiness!”'},
+      {ms:3000,step:3,text:'So far as he understands the words at all, he takes them as his own, “for he cannot conceive of any other except himself.”'}
+    ],'text');
+
+    function draw(f,t){
+      const s=f.phase.step;
+      // How far the voice has travelled (0 at the Square, 1 at the Point), and the Point's lustre.
+      const go=s===0?clamp01(f.p/0.9):1;
+      const lustre=s===0?0.2:s===1?0.2+0.8*P.ease(f.p):1;
+      const[g,w,h]=C.setup(view);
+      const py=h*0.55,qx=w*0.24,px=w*0.82,side=Math.min(h*0.2,w*0.08);
+      drawSphere(g,qx-side*1.6,py-side*0.3,side*1.15);
+      drawSquare(g,qx,py,side);
+      label(g,'the Sphere',qx-side*1.6,py-side*1.7);
+      label(g,'the Square',qx,py+side+14);
+      // The shout: a front of rings leaving the Square while he speaks.
+      if(s===0){
+        const front=qx+side/2+(px-qx-side/2)*go;
+        g.strokeStyle=C.token('--ink');g.lineWidth=1;
+        for(let k=0;k<4;k++){
+          const x=front-k*14;if(x<qx+side/2)continue;
+          g.globalAlpha=0.7-k*0.15;g.beginPath();g.arc(qx+side/2,py,x-qx-side/2,-0.5,0.5);g.stroke();
+        }
+        g.globalAlpha=1;
+      }
+      drawPoint(g,px,py,lustre);
+      label(g,'the King of Pointland',px,py-36);
+      label(g,'lustre',8,16,'left');
+      g.strokeStyle=C.token('--line-strong');g.lineWidth=1;g.strokeRect(58,8,80,9);
+      g.fillStyle=C.token('--ink');g.fillRect(58,8,80*lustre,9);
+
+      // The Point's own world: one dot, and whatever reaches it becomes its thought.
+      const[c,cw,ch]=C.setup(heard);
+      const dx=cw*0.5,dy=ch*0.5;
+      drawPoint(c,dx,dy,lustre*0.6);
+      if(s===0){
+        // Words outside it do not exist for it until they arrive.
+        const x=cw*0.08+(dx-14-cw*0.08)*go;
+        c.globalAlpha=0.25+0.5*go;label(c,WORDS,x,dy+4,'right');c.globalAlpha=1;
+      }else{
+        const k=s===1?P.ease(f.p):1;
+        c.globalAlpha=k;
+        label(c,'Its own thought',dx,dy-18,'center',true);
+        label(c,s>=3?'nothing but It, thinking':'“Sweet rebellion”',dx,dy+28,'center');
+        c.globalAlpha=1;
+      }
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // ?scene=approach|soliloquy|harangue shows one scene, so each can sit beside its own paragraph.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const SCENES={approach:setupApproach,soliloquy:setupSoliloquy,harangue:setupHarangue};
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
+    SCENES[id](el);
+  });
+})();
+</script>
+</body>
+</html>

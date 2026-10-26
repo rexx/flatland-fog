@@ -37,12 +37,14 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | III | Lineage (`lineage`): each son has one more side, up to the Circle; an Isosceles family widens its angle to 60° and the child is adopted by an Equilateral | Done |
 | IV | Meeting a woman (`meeting-a-woman`): a line side on, a lustrous point eye first, a dim point from behind; in the street, the peace-cry and the swaying back | Done |
 | V | Recognition by feeling (`feeling`): one felt angle tells Triangle, Square and Pentagon apart but hardly ten sides from twelve; the grandfather's accident and the family's climb back to 60° | Done |
+| VII | Irregular figures (`irregular`): a figure with unequal sides must be felt corner by corner, a tradesman's parallelogram sticks fast in your door, and a man with a polygonal front passes for a gentleman until he turns; the same figure is in the recognition game | Done |
 | VIII | The Colour Revolt (`colour-revolt`): Chromatistes paints himself and turns, the fashion spreads through every class but the women and the Priests, and the army passes in review in the colours the book names | Done |
 | IX | The Colour Bill (`colour-bill`): painted red in front and green behind, a woman and a Priest become the same line; in colour, like the rest of Sections VIII to X | Done |
 | XIII | Lineland (`lineland`): a world that is one Straight Line, where everyone sees only a Point; the King hears the Square as a voice from inside, can never pass his neighbours, and marries by voice in the weekly Marriage Chorus | Done |
 | XIV, XVI | Passing through (`passing-through`): the Square steps out of Lineland, and the Sphere rises out of Flatland | Done |
 | XVIII | The view from above (`view-from-above`): rise out of the plane and see into the Square's house, then the whole city | Done |
 | XIX | Strictly according to Analogy (`dimension-ladder`): the Sphere stacks square cards into a Cube; then a moving point makes a line, a line a square, a square a cube, and a cube, drawn as its shadow, a figure with sixteen corners | Done |
+| XX | Pointland (`pointland`): the Sphere and the Square float down to a Point whose hum carries twenty diagonals; it thinks, utters and hears only itself, and takes the Square's insults for its own thought | Done |
 
 ## Regenerating the text
 

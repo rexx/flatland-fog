@@ -8,7 +8,8 @@
 
   function onCircle(degs,th){return degs.map(d=>{const a=(d+th)*RAD;return[R*Math.cos(a),R*Math.sin(a)];});}
 
-  // spec: {kind, apex?, sca?, irr?}. kind is '0' (circle), 'seg', 'iso', 'sca', 'irr' or a side count.
+  // spec: {kind, apex?, sca?, irr?, tpb?}. kind is '0' (circle), 'seg', 'iso', 'sca', 'irr',
+  // 'tpb' (triangular front, polygonal back) or a side count. irr and tpb are [degrees, radius] lists.
   // Returns the vertex list, or null for the circle.
   function verts(spec,th){
     const kind=spec.kind;
@@ -16,7 +17,7 @@
     if(kind==='seg')return onCircle([-90,90],th);
     if(kind==='iso')return onCircle([-90,90-spec.apex,90+spec.apex],th);
     if(kind==='sca')return onCircle(spec.sca,th);
-    if(kind==='irr'){const t=th*RAD;return spec.irr.map(([d,r])=>[r*Math.cos(d*RAD+t),r*Math.sin(d*RAD+t)]);}
+    if(kind==='irr'||kind==='tpb'){const t=th*RAD;return spec[kind].map(([d,r])=>[r*Math.cos(d*RAD+t),r*Math.sin(d*RAD+t)]);}
     const n=parseInt(kind,10),a=[];for(let k=0;k<n;k++)a.push(-90+360*k/n);return onCircle(a,th);
   }
 
