@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meeting a Woman · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none;display:block}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.scenes{display:flex;flex-direction:column;gap:24px}
+.embedded .head,.embedded .panel h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/04-concerning-the-women.html">← Section IV · Concerning the Women</a>
+    <h1>Meeting a woman</h1>
+    <p>A woman in Flatland is a Straight Line. Side on she is a line; end on she is a point, bright at her eye and dim at her back, where she is all but invisible.</p>
+  </header>
+
+  <div class="scenes">
+    <section class="panel" id="needle">
+      <h2>The needle</h2>
+      <div class="stage">
+        <div class="label">From above</div>
+        <canvas class="paper top" style="height:clamp(150px,34vw,210px)" role="img" aria-label="A woman, a straight line with an eye at one end, turns in front of an observer: first side on, then eye first, then back first"></canvas>
+        <div class="label">What you see</div>
+        <canvas class="paper strip" style="height:40px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="street">
+      <h2>In the street</h2>
+      <div class="stage">
+        <div class="label">From above</div>
+        <canvas class="paper top" style="height:clamp(150px,34vw,210px)" role="img" aria-label="A man walks up behind a woman who has her back to him; three times: silent, keeping up her peace-cry, and swaying her back from side to side"></canvas>
+        <div class="label">What he sees</div>
+        <canvas class="paper strip" style="height:40px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const C=FlatlandCanvas,P=FlatlandPlayer;
+  const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+  const TAU=2*Math.PI,COLS=360;
+  // How brightly each part of her shines before the fog: her eye end is "highly lustrous",
+  // her side an ordinary line, her back "sub-lustrous, almost as dim as an inanimate object".
+  const LUSTRE={eye:1,side:0.85,back:0.3};
+  // Width in pixels of a woman seen exactly end on.
+  const POINT_PX=5;
+
+  function bind(el,phases,draw){
+    P.create({
+      duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('button'),
+      caption:el.querySelector('.caption'),steps:P.steps(phases,'text'),
+      draw:t=>draw(P.phaseAt(phases,t),t)
+    });
+  }
+
+  function hexToRgb(hex){const n=parseInt(hex.replace('#',''),16);return[(n>>16)&255,(n>>8)&255,n&255];}
+  const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+  const css=c=>'rgb('+c.map(Math.round).join(',')+')';
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+
+  // A woman is a segment of half-length len centred at (x, y); facing is the direction her eye
+  // looks, clockwise from +y. Returns [back, front].
+  function ends(w){
+    const s=Math.sin(w.facing),c=Math.cos(w.facing);
+    return[[w.x-w.len*s,w.y-w.len*c],[w.x+w.len*s,w.y+w.len*c]];
+  }
+
+  // One ray per column from the eye. Her side shows as a line; when she is so nearly end on that
+  // the line is narrower than a few columns, the nearer end shows as a point with its own lustre.
+  // Returns {cols: brightness or null per column, point: {i, b} or null}.
+  function view(w,eye){
+    const[back,front]=ends(w);
+    const fade=t=>clamp(Math.exp(-eye.fog*(t-eye.near)),0,1);
+    const ang=p=>Math.atan2(p[0]-eye.x,p[1]-eye.y)-eye.dir;
+    const colOf=a=>(a+eye.half)/(2*eye.half)*(COLS-1);
+    const cols=[];
+    for(let i=0;i<COLS;i++){
+      const a=eye.dir-eye.half+2*eye.half*i/(COLS-1),dx=Math.sin(a),dy=Math.cos(a);
+      const ex=front[0]-back[0],ey=front[1]-back[1],den=dx*ey-dy*ex;
+      if(Math.abs(den)<1e-9){cols.push(null);continue;}
+      const qx=back[0]-eye.x,qy=back[1]-eye.y,t=(qx*ey-qy*ex)/den,u=(qx*dy-qy*dx)/den;
+      if(!(t>0&&u>=0&&u<=1)){cols.push(null);continue;}
+      // Seen obliquely, the side takes on the lustre of whichever end is toward the eye.
+      const n=Math.hypot(ex,ey),sin=Math.abs(den)/n,endL=dx*ex+dy*ey>0?LUSTRE.back:LUSTRE.eye;
+      cols.push((endL+(LUSTRE.side-endL)*sin)*fade(t));
+    }
+    let point=null;
+    const ia=colOf(ang(back)),ib=colOf(ang(front));
+    if(Math.abs(ia-ib)<3){
+      const db=Math.hypot(back[0]-eye.x,back[1]-eye.y),df=Math.hypot(front[0]-eye.x,front[1]-eye.y);
+      const near=df<db?{d:df,l:LUSTRE.eye,i:ib}:{d:db,l:LUSTRE.back,i:ia};
+      point={i:near.i,b:near.l*fade(near.d)};
+      for(let i=0;i<COLS;i++)cols[i]=null;
+    }
+    return{cols,point};
+  }
+
+  function drawStrip(c,v){
+    const[g,w,h]=C.setup(c);
+    const paper=C.token('--paper'),fog=hexToRgb(C.token('--fog')),ink=hexToRgb(C.token('--ink'));
+    g.fillStyle=paper;g.fillRect(0,0,w,h);
+    g.strokeStyle=C.token('--paper-grid');g.lineWidth=1;g.beginPath();
+    for(let x=-h;x<w;x+=8){g.moveTo(x,h);g.lineTo(x+h,0);}
+    g.stroke();
+    const cw=w/COLS;
+    v.cols.forEach((b,i)=>{if(b===null)return;g.fillStyle=css(mix(fog,ink,b));g.fillRect(i*cw,0,cw+0.6,h);});
+    if(v.point){
+      g.fillStyle=css(mix(fog,ink,v.point.b));
+      g.fillRect((v.point.i+0.5)*cw-POINT_PX/2,0,POINT_PX,h);
+    }
+  }
+
+  // Top view, turned so the observer looks to the right: world +y runs right, world +x runs down.
+  // box is [y0, y1, x0, x1].
+  function drawTop(c,box,eye,women,extra){
+    const[g,w,h]=C.setup(c);
+    const sc=Math.min(w/(box[1]-box[0]),h/(box[3]-box[2]));
+    const ox=w/2-(box[0]+box[1])/2*sc,oy=h/2-(box[2]+box[3])/2*sc;
+    const S=([x,y])=>[ox+y*sc,oy+x*sc];
+    const O=S([eye.x,eye.y]),L=(box[1]-box[0])*1.5;
+    g.setLineDash([4,4]);g.strokeStyle=C.token('--line-strong');g.lineWidth=1;
+    [-eye.half,eye.half].forEach(a=>{
+      const e=S([eye.x+Math.sin(eye.dir+a)*L,eye.y+Math.cos(eye.dir+a)*L]);
+      g.beginPath();g.moveTo(O[0],O[1]);g.lineTo(e[0],e[1]);g.stroke();
+    });
+    g.setLineDash([]);
+    if(extra)extra(g,S,sc);
+    women.forEach(wm=>{
+      const[b,f]=ends(wm).map(S);
+      g.strokeStyle=C.token('--ink');g.lineWidth=3;g.lineCap='round';
+      g.beginPath();g.moveTo(b[0],b[1]);g.lineTo(f[0],f[1]);g.stroke();
+      g.fillStyle=C.token('--paper');g.strokeStyle=C.token('--ink');g.lineWidth=1.5;
+      g.beginPath();g.arc(f[0],f[1],4,0,TAU);g.fill();g.stroke();
+    });
+    g.fillStyle=C.token('--observer');g.beginPath();g.arc(O[0],O[1],5,0,TAU);g.fill();
+    return S;
+  }
+
+  function label(g,text,x,y,align){
+    g.font=MONO;g.fillStyle=C.token('--muted');g.textAlign=align||'center';
+    g.fillText(text,x,y);g.textAlign='left';
+  }
+
+  // She turns in front of you: side on, eye first, side on again, back first.
+  function setupNeedle(el){
+    const top=el.querySelector('.top'),strip=el.querySelector('.strip');
+    const eye={x:0,y:-2.2,dir:0,half:0.42,fog:1.6,near:2.1};
+    const woman={x:0,y:0,len:0.55,facing:Math.PI/2};
+    const BOX=[-2.5,0.9,-1.05,1.05];
+    // Facing angles: side on (eye to one side), eye toward you, side on, back toward you.
+    const SIDE=Math.PI/2,FRONT=Math.PI,SIDE2=3*Math.PI/2,BACK=2*Math.PI;
+    const PHASES=P.pace([
+      {ms:2600,from:SIDE,to:SIDE,text:'“When her side is turned towards us, we see her as a straight line.”'},
+      {ms:2600,from:SIDE,to:FRONT,text:'She turns her eye toward you.'},
+      {ms:2400,from:FRONT,to:FRONT,text:'“Then we see nothing but a highly lustrous point.”'},
+      {ms:3400,from:FRONT,to:BACK,text:'She turns on round, through side on, until her back is toward you.'},
+      {ms:3200,from:BACK,to:BACK,text:'Her back is “almost as dim as an inanimate object”: it serves her “as a kind of Invisible Cap.”'}
+    ],'text');
+
+    function draw(f){
+      const ph=f.phase;
+      woman.facing=ph.from+(ph.to-ph.from)*P.ease(f.p);
+      drawTop(top,BOX,eye,[woman],(g,S)=>{
+        const[b,fr]=ends(woman).map(S);
+        const dx=fr[0]-b[0],dy=fr[1]-b[1],n=Math.hypot(dx,dy)||1;
+        label(g,'eye',fr[0]+dx/n*16,fr[1]+dy/n*16+4);
+        label(g,'you',S([eye.x,eye.y])[0],S([eye.x,eye.y])[1]+18);
+      });
+      drawStrip(strip,view(woman,eye));
+      return ph.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // A man walks up behind a woman three times: she is silent, she keeps up her peace-cry,
+  // and she sways her back from right to left.
+  function setupStreet(el){
+    const top=el.querySelector('.top'),strip=el.querySelector('.strip');
+    const START=-3.2,STOP=0.3,PASS=2.6,ASIDE=0.95;
+    const woman={x:0,y:1.25,len:0.4,facing:0};
+    const eye={x:0,y:START,dir:0,half:0.45,fog:0.9,near:0.6};
+    const BOX=[-3.5,2.7,-1.3,1.3];
+    const PHASES=P.pace([
+      {ms:4200,pass:'silent',text:'She stands with her back to him. He sees only “a dim sub-lustrous point”, or nothing.'},
+      {ms:2600,pass:'silent',hold:true,text:'He stops just short. “How difficult must it be, even for the most cautious, always to avoid collision!”'},
+      {ms:5200,pass:'cry',text:'So no female shall walk in any public place “without continually keeping up her peace-cry.” He hears her, and steps aside.'},
+      {ms:5200,pass:'sway',text:'Some States forbid women to stand in public “without moving their backs constantly from right to left so as to indicate their presence to those behind them.”'}
+    ],'text');
+
+    function draw(f,t){
+      const ph=f.phase;
+      woman.facing=0;
+      eye.x=0;eye.dir=0;
+      if(ph.pass==='silent'){
+        const p=ph.hold?1:f.p;
+        // He slows sharply in the last stretch, as he makes her out.
+        eye.y=START+(STOP-START)*(p<0.8?p/0.8*0.92:0.92+0.08*P.ease((p-0.8)/0.2));
+      }else{
+        eye.y=START+(PASS-START)*f.p;
+        // He swerves around her once he knows she is there.
+        const k=clamp((eye.y-(woman.y-2.2))/1.4,0,1),back=clamp((eye.y-(woman.y+0.4))/1.0,0,1);
+        eye.x=ASIDE*(P.ease(k)-P.ease(back));
+        eye.dir=0;
+        if(ph.pass==='sway')woman.facing=0.6*Math.sin(TAU*t/1300);
+      }
+      drawTop(top,BOX,eye,[woman],(g,S,sc)=>{
+        if(ph.pass==='cry'){
+          // Her peace-cry spreads in every direction.
+          const c=S([woman.x,woman.y]);
+          g.strokeStyle=C.token('--ink');g.lineWidth=1;
+          for(let k=0;k<3;k++){
+            const q=((t/900)+k/3)%1;
+            g.globalAlpha=(1-q)*0.6;g.beginPath();g.arc(c[0],c[1],4+q*1.8*sc,0,TAU);g.stroke();
+          }
+          g.globalAlpha=1;
+        }
+        const c=S([woman.x,woman.y]);
+        label(g,'a woman',c[0],c[1]+0.55*sc);
+      });
+      drawStrip(strip,eye.y<woman.y?view(woman,eye):{cols:new Array(COLS).fill(null),point:null});
+      return ph.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // ?scene=needle|street shows one scene, so each can sit beside its own paragraph.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const SCENES={needle:setupNeedle,street:setupStreet};
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
+    SCENES[id](el);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recognition by Feeling · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none;display:block}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.scenes{display:flex;flex-direction:column;gap:24px}
+.embedded .head,.embedded .panel h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/05-of-our-methods-of-recognizing-one-another.html">← Section V · Of Our Methods of Recognizing One Another</a>
+    <h1>Recognition by feeling</h1>
+    <p>A Flatlander cannot see an angle, but he can feel one. A single corner tells a stranger’s class, until the angles of the nobility grow too close to tell apart.</p>
+  </header>
+
+  <div class="scenes">
+    <section class="panel" id="touch">
+      <h2>Feel a single angle</h2>
+      <div class="stage">
+        <div class="label">From above</div>
+        <canvas class="paper top" style="height:clamp(150px,30vw,190px)" role="img" aria-label="A Square touches one corner of each stranger in turn: an Isosceles, an Equilateral Triangle, a Square, a Pentagon, then Polygons of ten and twelve sides and of twenty and twenty-four sides"></canvas>
+        <div class="label">The angle he feels; marks show each class by its number of sides</div>
+        <canvas class="paper scale" style="height:76px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="ancestor">
+      <h2>One little accident</h2>
+      <div class="stage">
+        <div class="label">From above</div>
+        <canvas class="paper top" style="height:clamp(150px,30vw,190px)" role="img" aria-label="An Isosceles workman being felt by a Polygon starts suddenly and pierces him; the family's angle falls to 58 degrees and climbs back half a degree a generation to 60"></canvas>
+        <div class="label">The family’s angle, generation by generation</div>
+        <canvas class="paper chart" style="height:120px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const C=FlatlandCanvas,P=FlatlandPlayer;
+  const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+  const TAU=2*Math.PI,DEG=Math.PI/180;
+
+  function bind(el,phases,draw){
+    P.create({
+      duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('button'),
+      caption:el.querySelector('.caption'),steps:P.steps(phases,'text'),
+      draw:t=>draw(P.phaseAt(phases,t),t)
+    });
+  }
+
+  function label(g,text,x,y,align){
+    g.font=MONO;g.fillStyle=C.token('--muted');g.textAlign=align||'center';
+    g.fillText(text,x,y);g.textAlign='left';
+  }
+
+  function shape(g,pts,alpha,strong){
+    g.globalAlpha=alpha;
+    g.fillStyle=C.token('--paper-2');g.strokeStyle=C.token(strong?'--ink':'--shape');g.lineWidth=1.5;g.lineJoin='miter';
+    g.beginPath();pts.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke();
+    g.globalAlpha=1;
+  }
+
+  // A figure of radius r in pixels with one corner pointing in direction dir (radians, screen).
+  // n is a side count, or {apex} for an Isosceles with that apex angle in degrees.
+  function corner(n,x,y,r,dir){
+    if(typeof n==='object'){
+      const a=n.apex*DEG,c=Math.cos(dir),s=Math.sin(dir);
+      const loc=[[r,0],[-r*Math.cos(a),r*Math.sin(a)],[-r*Math.cos(a),-r*Math.sin(a)]];
+      return loc.map(([u,v])=>[x+u*c-v*s,y+u*s+v*c]);
+    }
+    const v=[];for(let k=0;k<n;k++){const a=dir+TAU*k/n;v.push([x+r*Math.cos(a),y+r*Math.sin(a)]);}
+    return v;
+  }
+
+  const interior=n=>typeof n==='object'?n.apex:180-360/n;
+  // Minutes always shown, so a centred label keeps its width while the angle changes.
+  function fmtAngle(d){const w=Math.floor(d+1e-9),m=Math.round((d-w)*60);return w+'° '+String(m).padStart(2,'0')+'′';}
+
+  // A Square feels one corner of each stranger in turn; the scale below marks what he feels
+  // against the angles of each class.
+  function setupTouch(el){
+    const top=el.querySelector('.top'),scale=el.querySelector('.scale');
+    const SAME='Long practice lets us tell at once, by a single angle, an equal-sided Triangle, a Square and a Pentagon.';
+    const MASTER='“Even a Master of Arts in our University of Wentbridge has been known to confuse a ten-sided with a twelve-sided Polygon.”';
+    const DOCTOR='Hardly a Doctor of Science could “decide promptly and unhesitatingly between a twenty-sided and a twenty-four sided member of the aristocracy.”';
+    const PHASES=P.pace([
+      {ms:2600,n:{apex:10},name:'an Isosceles',text:'“The brainless vertex of an acute-angled Isosceles is obvious to the dullest touch.”'},
+      {ms:2200,n:3,name:'a Triangle',text:SAME},
+      {ms:2200,n:4,name:'a Square',text:SAME},
+      {ms:2200,n:5,name:'a Pentagon',text:SAME},
+      {ms:2400,n:10,name:'ten sides',text:MASTER},
+      {ms:2400,n:12,name:'twelve sides',text:MASTER},
+      {ms:2400,n:20,name:'twenty sides',text:DOCTOR},
+      {ms:2400,n:24,name:'twenty-four sides',text:DOCTOR}
+    ],'text');
+    const MARKS=[[60,'3'],[90,'4'],[108,'5'],[120,'6'],[144,'10'],[150,'12'],[162,'20'],[165,'24']];
+
+    function draw(f){
+      const ph=f.phase,i=f.index;
+      // Each stranger fades in, he reaches out and touches, and holds.
+      const show=P.ease(Math.min(1,f.p/0.2)),reach=P.ease(Math.max(0,Math.min(1,(f.p-0.2)/0.3))),felt=f.p>=0.5;
+      const[g,w,h]=C.setup(top);
+      const cy=h*0.45,r=Math.min(h*0.32,w*0.12),fr=r*0.62;
+      const tipX=w*0.56,sx=tipX+r;
+      if(i>0){
+        const old=PHASES[i-1];
+        shape(g,corner(old.n,sx,cy,r,Math.PI),1-show,false);
+      }
+      shape(g,corner(ph.n,sx,cy,r,Math.PI),show,true);
+      const restX=w*0.16,fx=restX+(tipX-fr-restX)*reach;
+      shape(g,corner(4,fx,cy,fr,0),1,false);
+      label(g,'the Feeler',fx,cy-fr-8);
+      g.globalAlpha=show;label(g,ph.name,sx,cy+r+16);g.globalAlpha=1;
+      // Every angle here is a whole number of degrees, and the readout is left-aligned.
+      if(felt)label(g,'he feels '+interior(ph.n)+'°',8,16,'left');
+
+      const[s,sw,sh]=C.setup(scale);
+      const x0=14,x1=sw-14,X=d=>x0+(x1-x0)*d/180,ay=sh*0.5;
+      s.strokeStyle=C.token('--line-strong');s.lineWidth=1;
+      s.beginPath();s.moveTo(x0,ay);s.lineTo(x1,ay);s.stroke();
+      s.fillStyle=C.token('--paper-2');s.fillRect(X(0),ay-5,X(60)-X(0),10);
+      label(s,'Isosceles',(X(0)+X(60))/2,ay-10);
+      label(s,'0°',x0,sh-6,'left');label(s,'180°',x1,sh-6,'right');
+      MARKS.forEach(([d,txt],k)=>{
+        s.strokeStyle=C.token('--muted');s.beginPath();s.moveTo(X(d),ay-5);s.lineTo(X(d),ay+5);s.stroke();
+        label(s,txt,X(d),k%2?ay+18:ay-10);
+      });
+      // The angle just felt, and the one before it for comparison.
+      const marker=(d,filled)=>{
+        const x=X(d);s.beginPath();s.moveTo(x,ay-2);s.lineTo(x-5,ay-14);s.lineTo(x+5,ay-14);s.closePath();
+        if(filled){s.fillStyle=C.token('--ink');s.fill();}else{s.strokeStyle=C.token('--ink');s.lineWidth=1;s.stroke();}
+      };
+      if(i>0)marker(interior(PHASES[i-1].n),false);
+      if(felt)marker(interior(ph.n),true);
+      return ph.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // The grandfather's story: an ancestor of 59 degrees 30 minutes starts while being felt and
+  // pierces a Polygon; the family falls to 58 degrees and climbs half a degree a generation.
+  function setupAncestor(el){
+    const top=el.querySelector('.top'),chart=el.querySelector('.chart');
+    // [label, angle] for the ancestor and the five generations after him.
+    const GENS=[['ancestor',59.5],['1',58],['2',58.5],['3',59],['4',59.5],['5',60]];
+    const PHASES=P.pace([
+      {ms:3200,shown:1,text:'A respectable working man with an angle of 59° 30′ is being felt by a Polygon.'},
+      {ms:2800,shown:1,text:'Afflicted with rheumatism, by one sudden start he “accidentally transfixed the great man through the diagonal.”'},
+      {ms:3000,shown:2,text:'The disgrace “threw back our family a degree and a half”: in the next generation the family brain was registered at only 58°.'},
+      {ms:4200,shown:5,text:'The brain of the Isosceles grows, if at all, by half a degree in every generation.'},
+      {ms:3200,shown:6,text:'“Not till the lapse of five generations” was the full 60° attained, “and the Ascent from the Isosceles finally achieved.”'}
+    ],'text');
+
+    function draw(f){
+      const i=f.index,ph=f.phase;
+      // How many points of the chart are in: during the slow climb, one more each half degree.
+      const shown=i===3?2+Math.min(3,Math.floor(f.p*3.99)+1):ph.shown;
+      const[g,w,h]=C.setup(top);
+      const cy=h*0.5,r=Math.min(h*0.36,w*0.13);
+      if(i<=1){
+        // The Polygon feels the workman's vertex; then the workman lurches forward through him.
+        const px=w*0.62,ax0=w*0.62-r*1.0-r*0.95;
+        const jab=i===1?P.ease(Math.min(1,f.p/0.25))*r*1.05:0;
+        const polygon=corner(8,px,cy,r*0.95,0);
+        shape(g,polygon,1,false);
+        const man=corner({apex:59.5},ax0+jab,cy,r,0);
+        shape(g,man,1,true);
+        label(g,'the Polygon',px,cy+r+16);
+        label(g,'the ancestor, 59° 30′',ax0+jab,cy-r-8);
+        if(i===1&&f.p>0.25){
+          // Where the vertex went in.
+          const tip=man[0];g.strokeStyle=C.token('--ink');g.lineWidth=1;
+          g.beginPath();g.arc(tip[0],tip[1],8,0,TAU);g.stroke();
+        }
+      }else{
+        // The current generation's member, angle first.
+        const[name,deg]=GENS[shown-1];
+        const fig=deg>=60?corner(3,w*0.5,cy,r,-Math.PI/2):corner({apex:deg},w*0.5,cy,r,-Math.PI/2);
+        shape(g,fig,1,true);
+        label(g,fmtAngle(deg),fig[0][0],fig[0][1]-8);
+        label(g,deg>=60?'generation 5: Regular':'generation '+name,w*0.5,cy+r+16);
+      }
+
+      const[c,cw,chh]=C.setup(chart);
+      const left=44,right=cw-16,topY=14,bot=chh-22,LO=57.5,HI=60.5;
+      const X=j=>left+(right-left)*j/(GENS.length-1),Y=d=>bot-(bot-topY)*(d-LO)/(HI-LO);
+      c.strokeStyle=C.token('--line');c.lineWidth=1;
+      [58,59,60].forEach(d=>{c.beginPath();c.moveTo(left,Y(d));c.lineTo(right,Y(d));c.stroke();label(c,d+'°',left-6,Y(d)+4,'right');});
+      c.setLineDash([4,3]);c.strokeStyle=C.token('--muted');c.beginPath();c.moveTo(left,Y(60));c.lineTo(right,Y(60));c.stroke();c.setLineDash([]);
+      label(c,'Regular',right,Y(60)-5,'right');
+      GENS.forEach(([name],j)=>label(c,name==='ancestor'?'anc.':name,X(j),chh-6));
+      c.strokeStyle=C.token('--ink');c.lineWidth=1.5;c.beginPath();
+      GENS.slice(0,shown).forEach(([,d],j)=>j?c.lineTo(X(j),Y(d)):c.moveTo(X(j),Y(d)));
+      c.stroke();
+      GENS.slice(0,shown).forEach(([,d],j)=>{c.fillStyle=C.token('--ink');c.beginPath();c.arc(X(j),Y(d),4,0,TAU);c.fill();});
+      return ph.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // ?scene=touch|ancestor shows one scene, so each can sit beside its own paragraph.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const SCENES={touch:setupTouch,ancestor:setupAncestor};
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
+    SCENES[id](el);
+  });
+})();
+</script>
+</body>
+</html>

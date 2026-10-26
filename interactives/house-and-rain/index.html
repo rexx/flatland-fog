@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Houses and Rain · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none;display:block}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.scenes{display:flex;flex-direction:column;gap:24px}
+.embedded .head,.embedded .panel h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/02-of-the-climate-and-houses-in-flatland.html">← Section II · Of the Climate and Houses in Flatland</a>
+    <h1>Houses and rain</h1>
+    <p>With no sun or stars, a Flatlander finds the North by the rain, which always comes from that way, and by the houses, whose roofs face it. The law has made those houses five-sided.</p>
+  </header>
+
+  <div class="scenes">
+    <section class="panel" id="north">
+      <h2>Finding the North</h2>
+      <div class="stage">
+        <div class="label">From above, North at the top</div>
+        <canvas class="paper top" style="height:clamp(190px,44vw,280px)" role="img" aria-label="A traveller waits on an empty plain until rain falls from the North; he walks on into a town whose pentagonal houses face their roofs to the rain, and gives a lady the North side of the street"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="law">
+      <h2>No sharp corners</h2>
+      <div class="stage">
+        <div class="label">From above, North at the top</div>
+        <canvas class="paper top" style="height:clamp(190px,44vw,280px)" role="img" aria-label="Triangular, square and pentagonal houses in a town and the country; over the centuries the triangles go, then the squares, until nearly every house is a pentagon"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const C=FlatlandCanvas,P=FlatlandPlayer;
+  const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+  const TAU=2*Math.PI;
+
+  function bind(el,phases,draw){
+    P.create({
+      duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('button'),
+      caption:el.querySelector('.caption'),steps:P.steps(phases,'text'),
+      draw:t=>draw(P.phaseAt(phases,t),t)
+    });
+  }
+
+  // World units with North up, fitted to the box [x0, x1, y0, y1].
+  function frame(c,box){
+    const[g,w,h]=C.setup(c);
+    const sc=Math.min(w/(box[1]-box[0]),h/(box[3]-box[2]));
+    const ox=w/2-(box[0]+box[1])/2*sc,oy=h/2+(box[2]+box[3])/2*sc;
+    return{g,w,h,sc,S:([x,y])=>[ox+x*sc,oy-y*sc]};
+  }
+
+  function label(g,text,x,y,align){
+    g.font=MONO;g.fillStyle=C.token('--muted');g.textAlign=align||'center';
+    g.fillText(text,x,y);g.textAlign='left';
+  }
+
+  // A house of n sides and radius r with a corner (or, for a Square, a flat roof) to the North.
+  function houseVerts(n,x,y,r){
+    const v=[],off=n===4?Math.PI/4:0;
+    for(let k=0;k<n;k++){const a=off+TAU*k/n;v.push([x+r*Math.sin(a),y+r*Math.cos(a)]);}
+    return v;
+  }
+
+  function poly(F,v,alpha,doors){
+    const{g,S}=F,p=v.map(S);
+    g.globalAlpha=alpha;
+    g.fillStyle=C.token('--paper-2');g.strokeStyle=C.token('--ink');g.lineWidth=1.5;g.lineJoin='miter';
+    g.beginPath();p.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke();
+    // Doors are gaps: a large one on the West wall for men, a small one on the East wall for women.
+    if(doors&&v.length===5){
+      g.strokeStyle=C.token('--paper-2');g.lineWidth=3;
+      [[3,4,0.32],[1,2,0.16]].forEach(([i,j,size])=>{
+        const a=p[i],b=p[j],m=[(a[0]+b[0])/2,(a[1]+b[1])/2],d=[(b[0]-a[0])*size,(b[1]-a[1])*size];
+        g.beginPath();g.moveTo(m[0]-d[0],m[1]-d[1]);g.lineTo(m[0]+d[0],m[1]+d[1]);g.stroke();
+      });
+    }
+    g.globalAlpha=1;
+  }
+
+  // The highest y of a polygon's outline at x, or null outside its span.
+  function roofAt(v,x){
+    let top=null;
+    v.forEach((a,i)=>{
+      const b=v[(i+1)%v.length];
+      if((x-a[0])*(x-b[0])>0||a[0]===b[0])return;
+      const y=a[1]+(b[1]-a[1])*(x-a[0])/(b[0]-a[0]);
+      if(top===null||y>top)top=y;
+    });
+    return top;
+  }
+
+  function drawSquareFigure(F,x,y,r,turn){
+    const v=[];for(let k=0;k<4;k++){const a=turn+Math.PI/4+TAU*k/4;v.push([x+r*Math.sin(a),y+r*Math.cos(a)]);}
+    const{g,S}=F,p=v.map(S);
+    g.fillStyle=C.token('--paper');g.strokeStyle=C.token('--ink');g.lineWidth=2;
+    g.beginPath();p.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke();
+  }
+
+  function drawCompass(F,x,y,known){
+    const{g,sc}=F,s=F.S([x,y]),r=0.32*sc;
+    g.strokeStyle=C.token('--muted');g.lineWidth=1;
+    g.beginPath();g.arc(s[0],s[1],r,0,TAU);g.stroke();
+    if(known){
+      g.fillStyle=C.token('--ink');g.beginPath();
+      g.moveTo(s[0],s[1]-r);g.lineTo(s[0]+r*0.25,s[1]);g.lineTo(s[0]-r*0.25,s[1]);g.closePath();g.fill();
+      label(g,'N',s[0],s[1]-r-5);
+    }else label(g,'N ?',s[0],s[1]+4);
+  }
+
+  // Short streaks falling southward at a steady pace, each hidden once it is south of a roof.
+  function drawRain(F,box,t,amount,houses){
+    const{g,S}=F;
+    const COUNT=70,SPEED=2.2,LEN=0.32,H=box[3]-box[2]+LEN;
+    g.strokeStyle=C.token('--muted');g.lineWidth=1;
+    for(let k=0;k<COUNT;k++){
+      if(k/COUNT>=amount)continue;
+      const x=box[0]+(box[1]-box[0])*((k*0.618034)%1);
+      const seed=Math.sin(k*12.9898)*43758.5453,phase=seed-Math.floor(seed);
+      const y=box[3]+LEN-((t/1000*SPEED+phase*H)%H);
+      let lo=y-LEN;
+      for(const v of houses){const r=roofAt(v,x);if(r!==null&&y>r-LEN&&lo<r){lo=Math.max(lo,r);}}
+      const shelter=houses.some(v=>{const r=roofAt(v,x);return r!==null&&y<=r;});
+      if(shelter||lo>=y)continue;
+      const a=S([x,y]),b=S([x,lo]);
+      g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
+    }
+  }
+
+  // A traveller waits for the rain, finds the North, walks into town, and gives a lady the North
+  // side of the way.
+  function setupNorth(el){
+    const top=el.querySelector('.top');
+    const BOX=[-4.4,4.4,-2.2,2.2];
+    const HOUSES=[[0.6,1.0],[1.9,1.0],[3.2,1.0],[1.25,-0.15],[2.55,-0.15],[3.85,-0.15]];
+    const R=0.48,STREET=-1.35;
+    const houses=HOUSES.map(([x,y])=>houseVerts(5,x,y,R));
+    const PHASES=P.pace([
+      {ms:3400,text:'On a desolate plain with no houses nor trees, he must sometimes stand still for hours, “waiting till the rain came.”'},
+      {ms:3000,text:'The rain, which falls at stated intervals, comes always from the North.'},
+      {ms:3200,text:'Now he knows his bearings, and walks on into town.'},
+      {ms:3600,text:'The houses have their sidewalls running North and South, “so that the roofs may keep off the rain from the North.”'},
+      {ms:4600,text:'It is a point of breeding, if you meet a lady in the street, “always to give her the North side of the way.”'}
+    ],'text');
+
+    function draw(f,t){
+      const i=f.index,F=frame(top,BOX),{g,S,sc}=F;
+      const town=i<3?0:i===3?P.ease(f.p):1;
+      const rain=i===0?0:i===1?Math.min(1,f.p*2):1;
+      const built=town>0?houses:[];
+      drawRain(F,BOX,t,rain,built);
+      if(town>0){
+        g.strokeStyle=C.token('--line-strong');g.lineWidth=1;g.globalAlpha=town;
+        [STREET+0.4,STREET-0.4].forEach(y=>{const a=S([-0.2,y]),b=S([BOX[1],y]);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();});
+        g.globalAlpha=1;
+        houses.forEach(v=>poly(F,v,town,true));
+        if(i===3){
+          const v=houses[0],o=S(v[0]);
+          label(g,'roof',o[0],o[1]-8);
+          const w=S([(v[3][0]+v[4][0])/2,(v[3][1]+v[4][1])/2]),e=S([(v[1][0]+v[2][0])/2,(v[1][1]+v[2][1])/2]);
+          label(g,'men',w[0]-6,w[1]+4,'right');label(g,'women',e[0]+6,e[1]+4,'left');
+        }
+      }
+      drawCompass(F,-3.8,1.6,i>=1);
+
+      // The traveller: lost and turning, then walking east into the street.
+      let x=-2.6,y=-0.3,turn=0;
+      if(i===0)turn=0.5*Math.sin(TAU*t/2600);
+      if(i===2){x=-2.6+1.9*P.ease(f.p);y=-0.3+(STREET+0.3+0.3)*P.ease(f.p);}
+      if(i>=3){x=-0.7;y=STREET;}
+      if(i===4){
+        // He walks east along the street and keeps to its South side; she comes west along the North side.
+        const p=f.p;x=-0.7+4.2*p;y=STREET-0.22*P.ease(Math.min(1,p*3));
+        const lx=4.1-4.4*p,ly=STREET+0.22,a=S([lx-0.28,ly]),b=S([lx+0.28,ly]);
+        g.strokeStyle=C.token('--ink');g.lineWidth=3;g.lineCap='round';
+        g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
+        g.fillStyle=C.token('--paper');g.lineWidth=1.5;g.beginPath();g.arc(a[0],a[1],3.5,0,TAU);g.fill();g.stroke();
+        label(g,'a lady',(a[0]+b[0])/2,a[1]-9);
+      }
+      drawSquareFigure(F,x,y,0.26,turn);
+      if(i<2){const s=S([x,y]);label(g,'a traveller',s[0],s[1]+0.45*sc);}
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // Over the centuries the law removes the sharp-cornered houses: triangles first, then squares
+  // in the towns, and at last in the country.
+  function setupLaw(el){
+    const top=el.querySelector('.top');
+    const BOX=[-4.5,4.5,-2.2,2.35];
+    const R=0.5;
+    // [x, y, kind in each of the four eras]; a kind of 3 that stays 3 is a state building.
+    const TOWN=[
+      [-3.6,1.15,[5,5,5,5]],[-2.4,1.15,[4,4,5,5]],[-1.2,1.15,[5,5,5,5]],[0,1.15,[3,4,5,5]],
+      [-3.6,-0.05,[4,4,5,5]],[-2.4,-0.05,[3,4,5,5]],[-1.2,-0.05,[4,4,5,5]],[0,-0.05,[5,5,5,5]],
+      [-3.6,-1.25,[3,3,3,3],'barracks'],[-2.4,-1.25,[4,4,5,5]],[-1.2,-1.25,[3,4,5,5]],[0,-1.25,[3,3,3,3],'powder-magazine']
+    ];
+    const COUNTRY=[[1.9,1.0,[4,4,4,5]],[3.6,1.35,[3,4,4,5]],[2.7,-0.35,[5,5,5,5]],[2.3,-1.45,[4,4,4,4],'a square house']];
+    const ERA=['long ago','the eleventh century','three centuries later','now'];
+    const PHASES=P.pace([
+      {ms:3600,era:0,text:'The angles of a Square, and still more of a Triangle, are “much more pointed than those of a Pentagon”.'},
+      {ms:3200,era:0,text:'A house’s lines are dimmer than a person’s, and a traveller who runs against its corner may be badly hurt.'},
+      {ms:4000,era:1,text:'In the eleventh century triangular houses were forbidden by law, except fortifications, powder-magazines, barracks and other state buildings.'},
+      {ms:4000,era:2,text:'About three centuries later, in every town above ten thousand, “the angle of a Pentagon was the smallest house-angle that could be allowed.”'},
+      {ms:4000,era:3,text:'Now even in the country the pentagon has replaced every other form. Only in some remote district “an antiquarian may still discover a square house.”'}
+    ],'text');
+
+    function draw(f){
+      const F=frame(top,BOX),{g,S,sc}=F,era=f.phase.era;
+      const k=era===0?1:P.ease(f.p);
+      // The town's limits.
+      const a=S([-4.25,1.85]),b=S([0.65,-1.9]);
+      g.setLineDash([4,4]);g.strokeStyle=C.token('--line-strong');g.lineWidth=1;
+      g.strokeRect(a[0],a[1],b[0]-a[0],b[1]-a[1]);g.setLineDash([]);
+      label(g,'a town above ten thousand',(a[0]+b[0])/2,a[1]-5);
+      label(g,'the country',S([2.85,0])[0],a[1]-5);
+      label(g,ERA[era],8,16,'left');
+
+      TOWN.concat(COUNTRY).forEach(([x,y,kinds,name])=>{
+        const now=kinds[era],before=era>0?kinds[era-1]:now;
+        if(now!==before){poly(F,houseVerts(before,x,y,R),1-k);poly(F,houseVerts(now,x,y,R),k);}
+        else poly(F,houseVerts(now,x,y,R),1);
+        if(name&&(name!=='a square house'||era===3)){
+          const s=S([x,y-R]);label(g,name,s[0],s[1]+13);
+        }
+      });
+      // On the first two captions, mark the corner angles of the three kinds.
+      if(era===0){
+        [[0,1.15,'60°'],[-2.4,1.15,'90°'],[-1.2,1.15,'108°']].forEach(([x,y,txt])=>{
+          const s=S([x,y]);label(g,txt,s[0],s[1]+4);
+        });
+      }
+      if(f.index===1){
+        // A traveller walking with his mind elsewhere, into a triangle's corner.
+        const p=P.ease(f.p),tip=[R*Math.sin(TAU/3),-1.25+R*Math.cos(TAU/3)],s=S(tip);
+        const x=1.4-0.8*p,v=[];
+        for(let j=0;j<4;j++){const ang=Math.PI/4+TAU*j/4;v.push(S([x+0.22*Math.sin(ang),-1.6+0.22*Math.cos(ang)]));}
+        g.fillStyle=C.token('--paper');g.strokeStyle=C.token('--ink');g.lineWidth=2;
+        g.beginPath();v.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke();
+        if(p>0.95){g.strokeStyle=C.token('--ink');g.lineWidth=1;g.beginPath();g.arc(s[0],s[1],9,0,TAU);g.stroke();}
+      }
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // ?scene=north|law shows one scene, so each can sit beside its own paragraph.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const SCENES={north:setupNorth,law:setupLaw};
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
+    SCENES[id](el);
+  });
+})();
+</script>
+</body>
+</html>

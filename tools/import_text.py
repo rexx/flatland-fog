@@ -33,6 +33,30 @@ EMBEDS = {
     1: [
         {"after": "illustration-1", "slug": "coin-on-table", "title": "Lower your eye to the table"},
     ],
+    2: [
+        {"after": "text:difficult to tell your North from your South", "slug": "house-and-rain", "query": "scene=north",
+         "title": "Finding the North"},
+        {"after": "text:discover a square house", "slug": "house-and-rain", "query": "scene=law",
+         "title": "No sharp corners"},
+    ],
+    3: [
+        {"after": "text:the son of a Pentagon, a Hexagon", "slug": "lineage", "query": "scene=sons",
+         "title": "One more side"},
+        {"after": "text:into his hereditary level", "slug": "lineage", "query": "scene=isosceles",
+         "title": "The rise of an Isosceles family"},
+    ],
+    4: [
+        {"after": "text:a kind of Invisible Cap", "slug": "meeting-a-woman", "query": "scene=needle",
+         "title": "The needle"},
+        {"after": "text:to those behind them", "slug": "meeting-a-woman", "query": "scene=street",
+         "title": "In the street"},
+    ],
+    5: [
+        {"after": "text:twenty-four sided member of the aristocracy", "slug": "feeling", "query": "scene=touch",
+         "title": "Feel a single angle"},
+        {"after": "text:one little accident in the process of Feeling", "slug": "feeling", "query": "scene=ancestor",
+         "title": "One little accident"},
+    ],
     6: [
         {"after": "text:the Merchant, what shall I see", "slug": "recognition-by-sight",
          "query": "scene=merchant", "title": "The Merchant"},
@@ -221,8 +245,9 @@ def chapter_page(ch, prev, nxt, notes, epigraph):
     refs = re.findall(r'href="#(note-\d+)"', "".join(body))
     notes_html = ""
     if refs:
+        # Notes are numbered through the whole book, so each item keeps its own number.
         items = "".join(
-            f'<li id="{r}">{notes[r]}<a class="backlink" href="#noteref-{r.split("-")[1]}" aria-label="Back to text">↩</a></li>'
+            f'<li id="{r}" value="{r.split("-")[1]}">{notes[r]}<a class="backlink" href="#noteref-{r.split("-")[1]}" aria-label="Back to text">↩</a></li>'
             for r in refs)
         notes_html = f'<section class="notes" aria-label="Notes"><h2>Notes</h2><ol>{items}</ol></section>'
 

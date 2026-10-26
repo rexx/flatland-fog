@@ -33,6 +33,10 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | I | Lower your eye to the table (`coin-on-table`) | Done |
 | VI | Recognition by sight (`recognition-by-sight`): the Merchant, the Physician and a hexagonal grandson walk out of the fog | Done |
 | VI | The recognition game (`recognition-game`): turn any figure in the fog, then test your eye; linked from the Section VI animation | Done |
+| II | Houses and rain (`house-and-rain`): a traveller waits for the rain to find the North, the roofs face it, a lady gets the North side of the way; the law removes triangular and then square houses | Done |
+| III | Lineage (`lineage`): each son has one more side, up to the Circle; an Isosceles family widens its angle to 60° and the child is adopted by an Equilateral | Done |
+| IV | Meeting a woman (`meeting-a-woman`): a line side on, a lustrous point eye first, a dim point from behind; in the street, the peace-cry and the swaying back | Done |
+| V | Recognition by feeling (`feeling`): one felt angle tells Triangle, Square and Pentagon apart but hardly ten sides from twelve; the grandfather's accident and the family's climb back to 60° | Done |
 | VIII | The Colour Revolt (`colour-revolt`): Chromatistes paints himself and turns, the fashion spreads through every class but the women and the Priests, and the army passes in review in the colours the book names | Done |
 | IX | The Colour Bill (`colour-bill`): painted red in front and green behind, a woman and a Priest become the same line; in colour, like the rest of Sections VIII to X | Done |
 | XIII | Lineland (`lineland`): a world that is one Straight Line, where everyone sees only a Point; the King hears the Square as a voice from inside, can never pass his neighbours, and marries by voice in the weekly Marriage Chorus | Done |

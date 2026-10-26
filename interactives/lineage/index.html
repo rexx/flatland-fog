@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lineage · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none;display:block}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.scenes{display:flex;flex-direction:column;gap:24px}
+.embedded .head,.embedded .panel h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/03-concerning-the-inhabitants-of-flatland.html">← Section III · Concerning the Inhabitants of Flatland</a>
+    <h1>Lineage</h1>
+    <p>In Flatland a son has one more side than his father, so a family climbs a step every generation. The Isosceles, whose sides are not all equal, climb only by a slow widening of their angle.</p>
+  </header>
+
+  <div class="scenes">
+    <section class="panel" id="sons">
+      <h2>One more side</h2>
+      <div class="stage">
+        <div class="label">Father to son, from above</div>
+        <canvas class="paper top" style="height:clamp(170px,30vw,210px)" role="img" aria-label="A Square's son is a Pentagon, his son a Hexagon, and so on, through the nobility and the Polygonal, until the figure cannot be told from a Circle"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="isosceles">
+      <h2>The rise of an Isosceles family</h2>
+      <div class="stage">
+        <div class="label">From above</div>
+        <canvas class="paper top" style="height:clamp(200px,40vw,250px)" role="img" aria-label="An Isosceles triangle stays the same for generations, then its angle widens slowly until it is equilateral; the child is certified Regular and taken from its parents to be adopted by an Equilateral"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const C=FlatlandCanvas,P=FlatlandPlayer;
+  const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+  const TAU=2*Math.PI,DEG=Math.PI/180;
+
+  function bind(el,phases,draw){
+    P.create({
+      duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('button'),
+      caption:el.querySelector('.caption'),steps:P.steps(phases,'text'),
+      draw:t=>draw(P.phaseAt(phases,t),t)
+    });
+  }
+
+  // Centred labels are kept inside the canvas.
+  function label(g,text,x,y,align){
+    g.font=MONO;g.fillStyle=C.token('--muted');g.textAlign=align||'center';
+    if(!align){const half=g.measureText(text).width/2+3;x=Math.max(half,Math.min(g.canvas.clientWidth-half,x));}
+    g.fillText(text,x,y);g.textAlign='left';
+  }
+
+  // Screen points: pts in pixels, drawn filled and outlined.
+  function shape(g,pts,alpha,strong){
+    g.globalAlpha=alpha;
+    g.fillStyle=C.token('--paper-2');g.strokeStyle=C.token(strong?'--ink':'--shape');g.lineWidth=1.5;g.lineJoin='miter';
+    g.beginPath();pts.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke();
+    g.globalAlpha=1;
+  }
+
+  // A regular n-gon of radius r centred at (x, y) in pixels, a corner at the top (a Square sits flat).
+  function regular(n,x,y,r){
+    const v=[],off=n===4?Math.PI/4:0;for(let k=0;k<n;k++){const a=off+TAU*k/n;v.push([x+r*Math.sin(a),y-r*Math.cos(a)]);}
+    return v;
+  }
+
+  // A Square's son is a Pentagon, and so on up to the Circle.
+  function setupSons(el){
+    const top=el.querySelector('.top');
+    // Side counts in order; null marks the generations skipped over.
+    const LINE=[4,5,6,7,8,null,12,20,null,60];
+    const NAMES={4:'Square',5:'Pentagon',6:'Hexagon',7:'Heptagon',8:'Octagon',12:'12 sides',20:'20 sides',60:'a Circle?'};
+    // Which figures each caption shows, and the class bands drawn beneath them.
+    const PHASES=P.pace([
+      {ms:2600,upto:1,text:'“It is a law of Nature with us that a male child shall have one more side than his father.”'},
+      {ms:3200,upto:4,text:'“Thus the son of a Square is a Pentagon; the son of a Pentagon, a Hexagon; and so on.”'},
+      {ms:3200,upto:7,text:'The nobility begin at the Hexagon and rise “in the number of their sides till they receive the honourable title of Polygonal.”'},
+      {ms:3400,upto:9,text:'At last the sides are so many and so small “that the Figure cannot be distinguished from a Circle”: he enters the Circular or Priestly order.'}
+    ],'text');
+    const BANDS=[[0,1,'gentlemen'],[2,7,'nobility'],[6,7,'Polygonal'],[9,9,'Priests']];
+
+    function draw(f){
+      const[g,w,h]=C.setup(top);
+      const n=LINE.length,cell=w/n,r=Math.min(cell*0.36,h*0.2),cy=h*0.38;
+      const prev=f.index>0?PHASES[f.index-1].upto:-1,upto=f.phase.upto;
+      LINE.forEach((sides,i)=>{
+        if(i>upto)return;
+        const cx=cell*(i+0.5);
+        const a=i<=prev?1:P.ease(Math.min(1,Math.max(0,f.p*(upto-prev)-(i-prev-1))));
+        if(sides===null){g.globalAlpha=a;label(g,'...',cx,cy+4);g.globalAlpha=1;return;}
+        shape(g,regular(sides,cx,cy,r),a,i===upto);
+        g.globalAlpha=a;label(g,cell<64?(sides===60?'Circle?':String(sides)):NAMES[sides],cx,cy+r+16);g.globalAlpha=1;
+        // An arrow from father to son.
+        if(i>0&&LINE[i-1]!==null&&a>0){
+          const x0=cell*(i-0.5)+r+3,x1=cx-r-3;
+          if(x1-x0>6){
+            g.globalAlpha=a;g.strokeStyle=C.token('--muted');g.lineWidth=1;
+            g.beginPath();g.moveTo(x0,cy);g.lineTo(x1,cy);g.moveTo(x1-4,cy-3);g.lineTo(x1,cy);g.lineTo(x1-4,cy+3);g.stroke();
+            g.globalAlpha=1;
+          }
+        }
+      });
+      BANDS.forEach(([i0,i1,name],k)=>{
+        if(i0>upto)return;
+        const y=h-14-(name==='Polygonal'?18:0),x0=cell*i0+6,x1=cell*(Math.min(i1,upto)+1)-6;
+        g.strokeStyle=C.token('--line-strong');g.lineWidth=1;
+        g.beginPath();g.moveTo(x0,y-10);g.lineTo(x0,y-6);g.lineTo(x1,y-6);g.lineTo(x1,y-10);g.stroke();
+        label(g,name,(x0+x1)/2,y+6);
+      });
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // An Isosceles of apex angle a (radians) inscribed in a circle of radius r: the base widens and
+  // the two equal sides shorten as the angle grows. Apex at the top.
+  function isosceles(a,x,y,r){
+    const half=Math.PI/2-a/2;
+    return[[x,y-r],[x+r*Math.sin(2*half),y-r*Math.cos(2*half)],[x-r*Math.sin(2*half),y-r*Math.cos(2*half)]];
+  }
+
+  function angleArc(g,pts,deg){
+    const[a,b,c]=pts,r=22;
+    const t1=Math.atan2(b[1]-a[1],b[0]-a[0]),t2=Math.atan2(c[1]-a[1],c[0]-a[0]);
+    g.strokeStyle=C.token('--ink');g.lineWidth=1;
+    g.beginPath();g.arc(a[0],a[1],r,Math.min(t1,t2),Math.max(t1,t2));g.stroke();
+    label(g,deg,a[0],a[1]-8);
+  }
+
+  // Fixed width (the labels are monospaced and centred), so they do not shift as the angle grows.
+  function fmtAngle(d){
+    const whole=Math.floor(d+1e-9),min=Math.round((d-whole)*60);
+    return String(whole).padStart(2,' ')+'° '+String(min).padStart(2,'0')+'′';
+  }
+
+  // The son of an Isosceles stays Isosceles; over many generations the angle widens to 60 degrees;
+  // the child is certified Regular and adopted by a childless Equilateral.
+  function setupIsosceles(el){
+    const top=el.querySelector('.top');
+    const LOW=10,FINAL=60;
+    const PHASES=P.pace([
+      {ms:3200,text:'“The son of an Isosceles remains Isosceles still.”'},
+      {ms:7000,text:'After long military successes or skilful labours, the more intelligent show “a slight increase of their third side or base, and a shrinkage of the two other sides.”'},
+      {ms:4200,text:'Rarely, a true Equilateral is born to Isosceles parents.'},
+      {ms:3000,text:'After a strict examination by the Sanitary and Social Board, the infant, “if certified as Regular,” is admitted into the class of Equilaterals.'},
+      {ms:3800,text:'He is taken from his proud yet sorrowing parents and adopted by a childless Equilateral, never to look upon his relations again.'}
+    ],'text');
+
+    function draw(f){
+      const[g,w,h]=C.setup(top);
+      const i=f.index,r=Math.min(h*0.3,w*0.11),cy=h*0.5;
+      // Generations and the apex angle: flat at first, then half a degree a generation.
+      let gen=1,deg=LOW;
+      if(i===0)gen=1+Math.floor(f.p*4.99);
+      else if(i===1){
+        // Slow at first, so the first few half degrees can be followed, then faster.
+        const q=0.15*f.p+0.85*f.p*f.p*f.p;
+        gen=5+Math.floor(q*((FINAL-0.5-LOW)/0.5));deg=LOW+(gen-5)*0.5;
+      }
+      else{gen=5+(FINAL-LOW)/0.5;deg=FINAL;}
+
+      // Layout: parents on the left, the child in the middle, the Equilateral family on the right.
+      const parentsX=w*0.2,childX0=w*0.5,adoptX=w*0.8;
+      const move=i===4?P.ease(f.p):0;
+      const childX=childX0+(adoptX-1.65*r-childX0)*move;
+      if(i>=2){
+        // The last generation steps aside to the left and becomes the father; the mother joins him.
+        const step=i===2?P.ease(Math.min(1,f.p/0.45)):1;
+        const mother=i===2?P.ease(Math.max(0,Math.min(1,(f.p-0.3)/0.3))):1;
+        const fx=childX0+(parentsX-r*0.6-childX0)*step,fr=r*(1-0.2*step);
+        const father=isosceles((FINAL-0.5)*DEG,fx,cy,fr);
+        shape(g,father,1,step<1);
+        label(g,fmtAngle(FINAL-0.5),father[0][0],father[0][1]-8);
+        if(step<1)label(g,'generation '+String(gen-1).padStart(3,' '),fx,cy+r+18);
+        // His mother is a woman: a Straight Line.
+        g.globalAlpha=mother;
+        g.strokeStyle=C.token('--shape');g.lineWidth=3;g.beginPath();
+        g.moveTo(parentsX+r*0.55,cy-r*0.8);g.lineTo(parentsX+r*0.55,cy+r*0.6);g.stroke();
+        if(step>=1)label(g,'his parents',parentsX,cy+r+18);
+        g.globalAlpha=1;
+      }
+      if(i>=3){
+        const a=i===3?P.ease(Math.min(1,f.p*2)):1;
+        g.globalAlpha=a;
+        shape(g,regular(3,adoptX+0.45*r,cy,r*0.8),1,false);
+        label(g,'an Equilateral',adoptX+0.3*r,cy+r+18);
+        // The home he may never enter again.
+        if(i===4){
+          const x=(parentsX+childX0)/2+r*0.4;
+          g.setLineDash([4,4]);g.strokeStyle=C.token('--line-strong');g.lineWidth=1;
+          g.beginPath();g.moveTo(x,cy-r*1.2);g.lineTo(x,cy+r*1.1);g.stroke();g.setLineDash([]);
+        }
+        g.globalAlpha=1;
+      }
+      // After the father steps aside, the new child grows in where he stood.
+      const born=i<2?1:i===2?P.ease(Math.max(0,Math.min(1,(f.p-0.5)/0.4))):1;
+      if(born<=0)return f.phase.text;
+      g.globalAlpha=born;
+      const pts=isosceles(deg*DEG,childX,cy,r*(0.3+0.7*born));
+      shape(g,pts,born,true);
+      g.globalAlpha=born;
+      angleArc(g,pts,fmtAngle(deg));
+      if(i===3){
+        // The Board checks all three angles.
+        [pts[1],pts[2]].forEach(p=>label(g,'60°',p[0]+(p[0]<childX?-16:16),p[1]+14));
+      }
+      label(g,i<2?'generation '+String(gen).padStart(3,' '):i===2?'the child':'Regular',childX,cy+r+18);
+      g.globalAlpha=1;
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // ?scene=sons|isosceles shows one scene, so each can sit beside its own paragraph.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const SCENES={sons:setupSons,isosceles:setupIsosceles};
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
+    SCENES[id](el);
+  });
+})();
+</script>
+</body>
+</html>
