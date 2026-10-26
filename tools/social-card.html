@@ -29,26 +29,50 @@ svg{display:block}
   </div>
   <svg width="600" height="630" viewBox="0 0 600 630" aria-hidden="true">
     <defs>
-      <!-- What a Flatlander sees of a Pentagon, corner first: bright at the corner, fading into the fog. -->
-      <linearGradient id="fog" x1="0" x2="1">
-        <stop offset="0" stop-color="#FFFFFF"/>
-        <stop offset="0.18" stop-color="#9A9A97"/>
-        <stop offset="0.5" stop-color="#1B1B1B"/>
-        <stop offset="0.82" stop-color="#9A9A97"/>
-        <stop offset="1" stop-color="#FFFFFF"/>
+      <clipPath id="table"><rect x="24" y="40" width="552" height="330"/></clipPath>
+      <!-- Distance haze over the table: clear near the eye, thick at the far side. -->
+      <linearGradient id="haze" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#ECECE9" stop-opacity="0"/>
+        <stop offset="1" stop-color="#ECECE9" stop-opacity="0.95"/>
       </linearGradient>
-      <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
-        <line x1="0" y1="0" x2="0" y2="10" stroke="#DCDCD8" stroke-width="2"/>
-      </pattern>
+      <!-- The triangle's face: dark at the corner nearest the eye, fading toward the far side. -->
+      <linearGradient id="face" gradientUnits="userSpaceOnUse" x1="0" y1="295" x2="0" y2="152">
+        <stop offset="0" stop-color="#2A2A29"/>
+        <stop offset="1" stop-color="#ABABA7"/>
+      </linearGradient>
+      <!-- What a Flatlander sees of the same triangle, corner first: dark at the corner, fading into the fog. -->
+      <linearGradient id="fog" x1="0" x2="1">
+        <stop offset="0" stop-color="#ECECE9"/>
+        <stop offset="0.5" stop-color="#1B1B1B"/>
+        <stop offset="1" stop-color="#ECECE9"/>
+      </linearGradient>
     </defs>
-    <!-- From above: the Pentagon, corner toward the observer, and the observer's field of view. -->
-    <line x1="300" y1="470" x2="90" y2="40" stroke="#A8A8A4" stroke-width="2" stroke-dasharray="8 8"/>
-    <line x1="300" y1="470" x2="510" y2="40" stroke="#A8A8A4" stroke-width="2" stroke-dasharray="8 8"/>
-    <polygon points="300,262 395,193 359,82 241,82 205,193" fill="#D2D2CE" stroke="#1B1B1B" stroke-width="4" stroke-linejoin="round"/>
-    <circle cx="300" cy="470" r="10" fill="#1B1B1B"/>
-    <!-- The one line he sees. -->
-    <rect x="60" y="520" width="480" height="48" rx="8" fill="url(#hatch)" stroke="#DADAD7" stroke-width="2"/>
-    <rect x="132" y="521" width="336" height="46" fill="url(#fog)"/>
+    <!-- The table, seen slightly from above. -->
+    <g clip-path="url(#table)" stroke="#BDBDB9" stroke-width="1.5">
+      <line x1="-163.7" y1="369.6" x2="-3.8" y2="57.9"/>
+      <line x1="-9.1" y1="369.6" x2="97.5" y2="57.9"/>
+      <line x1="145.4" y1="369.6" x2="198.7" y2="57.9"/>
+      <line x1="300" y1="369.6" x2="300" y2="57.9"/>
+      <line x1="454.6" y1="369.6" x2="401.3" y2="57.9"/>
+      <line x1="609.1" y1="369.6" x2="502.5" y2="57.9"/>
+      <line x1="763.7" y1="369.6" x2="603.8" y2="57.9"/>
+      <line x1="-118.8" y1="282.1" x2="718.8" y2="282.1"/>
+      <line x1="-81.8" y1="210" x2="681.8" y2="210"/>
+      <line x1="-50.8" y1="149.6" x2="650.8" y2="149.6"/>
+      <line x1="-24.5" y1="98.3" x2="624.5" y2="98.3"/>
+      <line x1="-3.8" y1="57.9" x2="603.8" y2="57.9"/>
+    </g>
+    <!-- A triangle lying on it, one corner toward the eye. -->
+    <polygon points="300,311.9 455.9,167.7 456.8,152.6 300,294.6" fill="#2F2F2E"/>
+    <polygon points="300,311.9 144.1,167.7 143.2,152.6 300,294.6" fill="#454543"/>
+    <polygon points="300,294.6 456.8,152.6 143.2,152.6" fill="url(#face)" stroke="#1B1B1B" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="24" y="40" width="552" height="330" fill="url(#haze)"/>
+    <line x1="24" y1="369.6" x2="576" y2="369.6" stroke="#1B1B1B" stroke-width="2"/>
+    <!-- Lower the eye to the table's edge and only a line is left. -->
+    <path d="M300 392 L300 446 M290 436 L300 448 L310 436" fill="none" stroke="#5E5E5C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="318" y="426" font-family="IBM Plex Mono, monospace" font-size="17" fill="#5E5E5C">lower the eye to the edge</text>
+    <rect x="143" y="466" width="314" height="40" fill="url(#fog)"/>
+    <text x="300" y="540" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="17" fill="#5E5E5C">all a Flatlander sees</text>
   </svg>
 </div>
 </body>
