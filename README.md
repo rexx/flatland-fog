@@ -50,8 +50,11 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | VII | Irregular figures (`irregular`): a figure with unequal sides must be felt corner by corner, a tradesman's parallelogram sticks fast in your door, and a man with a polygonal front passes for a gentleman until he turns; the same figure is in the recognition game | Done |
 | VIII | The Colour Revolt (`colour-revolt`): Chromatistes paints himself and turns, the fashion spreads through every class but the women and the Priests, and the army passes in review in the colours the book names | Done |
 | IX | The Colour Bill (`colour-bill`): painted red in front and green behind, a woman and a Priest become the same line; in colour, like the rest of Sections VIII to X | Done |
+| X | The Chromatic Sedition (`sedition`): a low Isosceles paints himself with a Dodecagon's twelve colours and looks like one in colour but not without it; at the Assembly the women charge back foremost, unseen by the soldiers | Done |
 | XIII | Lineland (`lineland`): a world that is one Straight Line, where everyone sees only a Point; the King hears the Square as a voice from inside, can never pass his neighbours, and marries by voice in the weekly Marriage Chorus | Done |
 | XIV, XVI | Passing through (`passing-through`): the Square steps out of Lineland, and the Sphere rises out of Flatland | Done |
+| XV | Three to the third (`three-cubed`): nine inch squares make 3² = 9, a moving Square makes 3³ somehow; then a Stranger appears who dims like a Circle but keeps changing his size | Done |
+| XVII | Deeds, not words (`cupboard`): the Sphere takes a tablet out of the locked cupboard, then touches the Square inside his stomach, shown from above and from Spaceland | Done |
 | XVIII | The view from above (`view-from-above`): rise out of the plane and see into the Square's house, then the whole city | Done |
 | XIX | Strictly according to Analogy (`dimension-ladder`): the Sphere stacks square cards into a Cube; then a moving point makes a line, a line a square, a square a cube, and a cube, drawn as its shadow, a figure with sixteen corners | Done |
 | XX | Pointland (`pointland`): the Sphere and the Square float down to a Point whose hum carries twenty diagonals; it thinks, utters and hears only itself, and takes the Square's insults for its own thought | Done |

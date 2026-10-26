@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Chromatic Sedition · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none;display:block}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.label strong{font-weight:500;color:var(--fg)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.grey{transition:opacity 0.4s}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.scenes{display:flex;flex-direction:column;gap:24px}
+.embedded .head,.embedded .panel h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/10-of-the-suppression-of-the-chromatic-sedition.html">← Section X · Of the Suppression of the Chromatic Sedition</a>
+    <h1>The Chromatic Sedition</h1>
+    <p>Two moments from the end of the Colour Bill: a low Isosceles paints himself as a Dodecagon and deceives a maiden, which turns the women against the Bill; and at the Assembly the women charge back foremost, unseen.</p>
+  </header>
+
+  <div class="scenes">
+    <section class="panel" id="disguise">
+      <h2>Twelve colours on three sides</h2>
+      <div class="stage">
+        <div class="pair">
+          <div class="col">
+            <div class="label"><strong>A Dodecagon</strong></div>
+            <canvas class="paper top" data-fig="dodecagon" style="height:clamp(120px,28vw,170px)" role="img" aria-label="A Dodecagon, painted with twelve colours, one on each side, turning slowly in front of an observer"></canvas>
+            <div class="label">In colour</div>
+            <canvas class="paper strip colour" data-fig="dodecagon" style="height:30px" aria-hidden="true"></canvas>
+            <div class="label grey">Without colour</div>
+            <canvas class="paper strip grey" data-fig="dodecagon" style="height:30px" aria-hidden="true"></canvas>
+          </div>
+          <div class="col">
+            <div class="label"><strong>An Isosceles of 4°</strong></div>
+            <canvas class="paper top" data-fig="isosceles" style="height:clamp(120px,28vw,170px)" role="img" aria-label="A needle-thin Isosceles Triangle paints the same twelve colours in bands around his three sides, and turns beside the Dodecagon"></canvas>
+            <div class="label">In colour</div>
+            <canvas class="paper strip colour" data-fig="isosceles" style="height:30px" aria-hidden="true"></canvas>
+            <div class="label grey">Without colour</div>
+            <canvas class="paper strip grey" data-fig="isosceles" style="height:30px" aria-hidden="true"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="charge">
+      <h2>Back foremost</h2>
+      <div class="stage">
+        <div class="label">The Assembly, from above</div>
+        <canvas class="paper top" style="height:clamp(200px,46vw,280px)" role="img" aria-label="A rank of painted Isosceles soldiers faces the regular classes; the regular classes open their ranks and a band of women moves upon the soldiers back foremost; the soldiers turn on one another and are gone"></canvas>
+        <div class="label">What the marked soldier sees</div>
+        <canvas class="paper strip" style="height:36px" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../../shared/geometry.js"></script>
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const G=FlatlandGeometry,C=FlatlandCanvas,P=FlatlandPlayer;
+  const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+  const TAU=2*Math.PI,COLS=360;
+
+  // The paints of Section VIII, [light theme, dark theme], in the order a Dodecagon wears them.
+  const HUES=[
+    ['#C23B2E','#E8695C'],['#D9782B','#F0A050'],['#D99A0B','#F2C04A'],['#2F8F4E','#5CC283'],
+    ['#1F7F86','#55BEC4'],['#2F5DA8','#6E9BE8'],['#2E35B0','#7C82F2'],['#7B3FA8','#B88AE6'],
+    ['#B07CB8','#D8A8DE'],['#C24A78','#EE84AE'],['#7A3420','#B8735C'],['#E03A28','#FF6A55']
+  ];
+  // How brightly each part of a woman shines before the fog (Section IV): her eye end is
+  // "highly lustrous", her back "almost as dim as an inanimate object".
+  const LUSTRE={eye:1,side:0.85,back:0.3};
+  const POINT_PX=4;
+
+  function hexToRgb(hex){const n=parseInt(hex.replace('#',''),16);return[(n>>16)&255,(n>>8)&255,n&255];}
+  const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+  const css=c=>'rgb('+c.map(Math.round).join(',')+')';
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  const clamp01=v=>clamp(v,0,1);
+  const lerp=(a,b,k)=>a+(b-a)*k;
+
+  function palette(){
+    const paper=hexToRgb(C.token('--paper'));
+    const dark=(paper[0]+paper[1]+paper[2])/3<128;
+    return{paper,paperHex:C.token('--paper'),grid:C.token('--paper-grid'),ink:hexToRgb(C.token('--ink')),
+      fog:hexToRgb(C.token('--fog')),fill:C.token('--paper-2'),outline:C.token('--line-strong'),
+      hues:HUES.map(h=>hexToRgb(h[dark?1:0]))};
+  }
+
+  function bind(el,phases,draw){
+    P.create({
+      duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('button'),
+      caption:el.querySelector('.caption'),steps:P.steps(phases,'text'),
+      draw:t=>draw(P.phaseAt(phases,t),t)
+    });
+  }
+
+  function label(g,text,x,y,align,strong){
+    g.font=MONO;g.fillStyle=C.token(strong?'--ink':'--muted');g.textAlign=align||'center';
+    if(g.textAlign==='center'){
+      const half=g.measureText(text).width/2+4;
+      x=Math.max(half,Math.min(g.canvas.clientWidth-half,x));
+    }
+    g.fillText(text,x,y);g.textAlign='left';
+  }
+
+  // Shapes in the world. A polygon is {verts, paint(k, u) -> hue index or null, coat (0 to 1),
+  // alpha}; side k runs from vertex k to k+1 and u is how far along it. A woman is {back, front,
+  // alpha}. The eye is {x, y, dir, half, fog, near}: brightness falls by e^-fog per unit beyond near.
+  function cast(shapes,eye,pal,coloured){
+    const segs=[];
+    shapes.forEach(s=>{
+      if(s.alpha<=0.01)return;
+      if(s.front){segs.push({s,a:s.back,b:s.front,woman:true});return;}
+      s.verts.forEach((a,k)=>segs.push({s,k,a,b:s.verts[(k+1)%s.verts.length]}));
+    });
+    const fade=t=>clamp01(Math.exp(-eye.fog*(t-eye.near)));
+    const out=[];
+    for(let i=0;i<COLS;i++){
+      const ang=eye.dir-eye.half+2*eye.half*i/(COLS-1),dx=Math.sin(ang),dy=Math.cos(ang);
+      let best=Infinity,hit=null,hu=0;
+      segs.forEach(sg=>{
+        const ex=sg.b[0]-sg.a[0],ey=sg.b[1]-sg.a[1],den=dx*ey-dy*ex;
+        if(Math.abs(den)<1e-9)return;
+        const qx=sg.a[0]-eye.x,qy=sg.a[1]-eye.y,t=(qx*ey-qy*ex)/den,u=(qx*dy-qy*dx)/den;
+        if(u<0||u>1||t<=1e-6||t>=best)return;
+        best=t;hit=sg;hu=u;
+        hit.den=den;hit.dx=dx;hit.dy=dy;
+      });
+      if(!hit){out.push(null);continue;}
+      let rgb=pal.ink;
+      if(hit.woman){
+        // Seen obliquely, her side takes on the lustre of whichever end is toward the eye.
+        const ex=hit.b[0]-hit.a[0],ey=hit.b[1]-hit.a[1],n=Math.hypot(ex,ey),sin=Math.abs(hit.den)/n;
+        const endL=hit.dx*ex+hit.dy*ey>0?LUSTRE.back:LUSTRE.eye;
+        out.push({rgb:mix(pal.fog,pal.ink,(endL+(LUSTRE.side-endL)*sin)*fade(best)),alpha:hit.s.alpha,d:best});
+        continue;
+      }
+      const hue=coloured&&hit.s.paint?hit.s.paint(hit.k,hu):null;
+      if(hue!==null)rgb=mix(pal.ink,pal.hues[hue],hit.s.coat);
+      out.push({rgb:mix(pal.fog,rgb,fade(best)),alpha:hit.s.alpha,d:best});
+    }
+    // A woman so nearly end on that she is narrower than a column shows as a point at her nearer end.
+    shapes.forEach(s=>{
+      if(!s.front||s.alpha<=0.01)return;
+      const col=p=>(Math.atan2(p[0]-eye.x,p[1]-eye.y)-eye.dir+eye.half)/(2*eye.half)*(COLS-1);
+      const ia=col(s.back),ib=col(s.front);
+      if(Math.abs(ia-ib)>=2)return;
+      const db=Math.hypot(s.back[0]-eye.x,s.back[1]-eye.y),df=Math.hypot(s.front[0]-eye.x,s.front[1]-eye.y);
+      const near=df<db?{d:df,l:LUSTRE.eye,i:ib}:{d:db,l:LUSTRE.back,i:ia};
+      const i=Math.round(near.i);
+      if(i<0||i>=COLS)return;
+      const cur=out[i];
+      if(cur&&cur.d<near.d)return;
+      out.point=out.point||[];
+      out.point.push({i:near.i,rgb:mix(pal.fog,pal.ink,near.l*fade(near.d)),alpha:s.alpha});
+    });
+    return out;
+  }
+
+  function drawStrip(c,prof,pal){
+    const[g,w,h]=C.setup(c);
+    g.fillStyle=pal.paperHex;g.fillRect(0,0,w,h);
+    g.strokeStyle=pal.grid;g.lineWidth=1;g.beginPath();
+    for(let x=-h;x<w;x+=8){g.moveTo(x,h);g.lineTo(x+h,0);}
+    g.stroke();
+    const cw=w/COLS;
+    prof.forEach((p,i)=>{if(!p)return;g.globalAlpha=p.alpha;g.fillStyle=css(p.rgb);g.fillRect(i*cw,0,cw+0.6,h);});
+    (prof.point||[]).forEach(p=>{g.globalAlpha=p.alpha;g.fillStyle=css(p.rgb);g.fillRect((p.i+0.5)*cw-POINT_PX/2,0,POINT_PX,h);});
+    g.globalAlpha=1;
+  }
+
+  // A polygon outlined side by side in its paints (or ink), filled with paper.
+  function drawPoly(g,S,s,pal,lw){
+    const v=s.verts.map(S);
+    g.globalAlpha=s.alpha;g.lineCap='round';g.lineJoin='round';
+    g.fillStyle=pal.fill;g.beginPath();v.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fill();
+    v.forEach((a,k)=>{
+      const b=v[(k+1)%v.length],bands=s.bands||1;
+      for(let j=0;j<bands;j++){
+        const u0=j/bands,u1=(j+1)/bands,hue=s.paint?s.paint(k,(u0+u1)/2):null;
+        g.strokeStyle=css(hue===null?pal.ink:mix(pal.ink,pal.hues[hue],s.coat));g.lineWidth=lw;
+        g.beginPath();g.moveTo(lerp(a[0],b[0],u0),lerp(a[1],b[1],u0));g.lineTo(lerp(a[0],b[0],u1),lerp(a[1],b[1],u1));g.stroke();
+      }
+    });
+    g.globalAlpha=1;g.lineCap='butt';
+  }
+
+  // Paints a polygon with the twelve hues in order round its perimeter, starting at vertex 0.
+  function perimeterPaint(verts){
+    const len=verts.map((a,k)=>{const b=verts[(k+1)%verts.length];return Math.hypot(b[0]-a[0],b[1]-a[1]);});
+    const total=len.reduce((x,y)=>x+y,0),cum=[0];len.forEach((l,k)=>cum.push(cum[k]+l));
+    return(k,u)=>Math.min(11,Math.floor((cum[k]+u*len[k])/total*12));
+  }
+
+  // A Dodecagon and a low Isosceles painted with the Dodecagon's twelve colours turn side by side.
+  function setupDisguise(el){
+    const tops=[...el.querySelectorAll('.top')],cols=[...el.querySelectorAll('.colour')],greys=[...el.querySelectorAll('canvas.grey')];
+    const greyLabels=[...el.querySelectorAll('.label.grey')];
+    const FOG=2.2,eye={x:0,y:-G.D,dir:0,half:G.FIELD_HALF,fog:FOG,near:G.D-G.R};
+    const FIGS={dodecagon:{spec:{kind:'12'},th0:-15},isosceles:{spec:{kind:'iso',apex:4},th0:90}};
+    const PHASES=P.pace([
+      {ms:3200,step:0,text:'In the days of the Colour Bill “the Art of Sight Recognition, being no longer needed, was no longer practised.” A Dodecagon is known by his twelve colours.'},
+      {ms:4000,step:1,text:'“An Isosceles of a low type, with a brain little if at all above four degrees … painted himself, or caused himself to be painted … with the twelve colours of a Dodecagon.”'},
+      {ms:6400,step:2,text:'“Going into the Market Place he accosted in a feigned voice a maiden, the orphan daughter of a noble Polygon, whose affection in former days he had sought in vain.”'},
+      {ms:5600,step:3,text:'In colour the two lines show the same twelve hues. Without it, an eye trained in Sight Recognition would see the Dodecagon’s soft, even fade beside the long hard line or the sharp point of a needle.'},
+      {ms:3200,step:4,text:'The maiden is deceived. When the news spreads, the women “regard the Colour Bill in an entirely new aspect.”'}
+    ],'text');
+
+    function draw(f){
+      const s=f.phase.step;
+      const coat=s===0?0:s===1?P.ease(f.p):1;
+      const turn=s<2?0:s===2?P.ease(f.p):s===3?1+P.ease(f.p)*0.5:1.5;
+      const greyOn=s>=3?1:0.25;
+      greys.forEach(c=>{c.style.opacity=greyOn;});greyLabels.forEach(l=>{l.style.opacity=greyOn;});
+      const pal=palette();
+      ['dodecagon','isosceles'].forEach((name,i)=>{
+        const F=FIGS[name],th=F.th0+turn*360;
+        const verts=G.verts(F.spec,th);
+        const shape={verts,paint:perimeterPaint(verts),coat:name==='dodecagon'?1:coat,alpha:1,bands:name==='dodecagon'?1:6};
+        // From above: the figure and the maiden's eye below it.
+        const c=tops[i];
+        const[g,w,h]=C.setup(c);
+        const yMin=-G.D-0.3,yMax=1.15,sc=Math.min(h/(yMax-yMin),w/2.8),cx=w/2;
+        const S=([x,y])=>[cx+x*sc,h-(y-yMin)*sc];
+        const O=S([0,-G.D]);
+        g.setLineDash([4,4]);g.strokeStyle=pal.outline;g.lineWidth=1;
+        [-G.FIELD_HALF,G.FIELD_HALF].forEach(a=>{const L=G.D+1.2;const q=S([Math.sin(a)*L,-G.D+Math.cos(a)*L]);g.beginPath();g.moveTo(O[0],O[1]);g.lineTo(q[0],q[1]);g.stroke();});
+        g.setLineDash([]);
+        drawPoly(g,S,shape,pal,3);
+        g.fillStyle=css(pal.ink);g.beginPath();g.arc(O[0],O[1],4,0,TAU);g.fill();
+        label(g,'the maiden',O[0]-8,O[1]+4,'right');
+        drawStrip(cols[i],cast([shape],eye,pal,true),pal);
+        drawStrip(greys[i],cast([shape],eye,pal,false),pal);
+      });
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // At the signal the regular classes open their ranks and the women charge back foremost.
+  function setupCharge(el){
+    const top=el.querySelector('.top'),strip=el.querySelector('.strip');
+    const BOX=[-5,5,-2.6,3.4];
+    // The marked soldier, in the middle of the rank, looks down the hall (-y) from his apex.
+    const ME=3,SOLDIER_Y=2.2,SOLDIER_LEN=0.8,REGULAR_Y=0.2,WOMEN_Y0=-1.6,WOMEN_Y1=1.25,WOMAN_LEN=0.32;
+    const XS=[-3.6,-2.4,-1.2,0,1.2,2.4,3.6];
+    // Spin each soldier turns through once they have "raised the cry of treachery".
+    const SPIN=[1.2,-0.9,1.6,-1.3,0.8,-1.5,1.1];
+    const PHASES=P.pace([
+      {ms:3400,step:0,text:'Pantocyclus ends his speech: “Sooner than this,” he cried, “come death.” At these words, “the preconcerted signal for action” …'},
+      {ms:3200,step:1,text:'“… the regular classes, opening their ranks, made way for a band of women …”'},
+      {ms:5200,step:2,text:'“… who, under direction of the Circles, moved, back foremost, invisibly and unerringly upon the unconscious soldiers.”'},
+      {ms:3600,step:3,text:'“Surprised, leader-less, attacked in front by invisible foes … they at once … lost all presence of mind, and raised the cry of ‘treachery.’”'},
+      {ms:3600,step:4,text:'“Every Isosceles now saw and felt a foe in every other. In half an hour not one of that vast multitude was living.”'}
+    ],'text');
+
+    function soldierVerts(x,y,face){
+      // A narrow Isosceles with his apex (his eye) toward face, clockwise from +y.
+      const L=SOLDIER_LEN,B=0.16,s=Math.sin(face),c=Math.cos(face);
+      return[[0,L*0.62],[B/2,-L*0.38],[-B/2,-L*0.38]].map(([lx,ly])=>[x+lx*c+ly*s,y-lx*s+ly*c]);
+    }
+    function regularVerts(n,x,y,r){const v=[];for(let k=0;k<n;k++){const a=TAU*k/n+Math.PI/n;v.push([x+r*Math.sin(a),y+r*Math.cos(a)]);}return v;}
+
+    function draw(f,t){
+      const s=f.phase.step,e=P.ease(f.p);
+      const open=s===0?0:s===1?e:1;
+      const advance=s<2?0:s===2?e:1;
+      const panic=s<3?0:s===3?e:1;
+      const gone=s<4?0:P.ease(clamp01((f.p-0.35)/0.65));
+      const pal=palette();
+      const shapes=[];
+      // The soldiers: painted, like everyone but the women and the Priests.
+      XS.forEach((x,i)=>{
+        const jig=panic*0.12*Math.sin(t/60+i*1.7);
+        const face=Math.PI+panic*SPIN[i]*(s===4?1+f.p:1)+jig;
+        const verts=soldierVerts(x,SOLDIER_Y,face);
+        shapes.push({verts,paint:k=>(i*3+k)%12,coat:1,alpha:1-gone,me:i===ME});
+      });
+      // The regular classes step aside to either end of the hall.
+      [[-1.8,5],[-0.6,4],[0.6,6],[1.8,5]].forEach(([x,n],i)=>{
+        const nx=x+(x<0?-1:1)*2.4*open;
+        const verts=regularVerts(n,nx,REGULAR_Y,0.42);
+        shapes.push({verts,paint:k=>(i*5+k*2)%12,coat:1,alpha:1});
+      });
+      // The women, backs toward the soldiers, eyes toward the hall.
+      [-1.5,-0.5,0.5,1.5].forEach((x,i)=>{
+        const y=lerp(WOMEN_Y0,WOMEN_Y1,advance)+0.05*Math.sin(i*2.1);
+        const wx=x*lerp(1,0.4,advance)+(i===1||i===2?(i===1?-0.18:0.18):0)*advance;
+        shapes.push({back:[wx,y+WOMAN_LEN],front:[wx,y-WOMAN_LEN],alpha:1-gone});
+      });
+
+      const[g,w,h]=C.setup(top);
+      const sc=Math.max(0.01,Math.min((w-16)/(BOX[1]-BOX[0]),(h-16)/(BOX[3]-BOX[2])));
+      const ox=w/2-(BOX[0]+BOX[1])/2*sc,oy=h/2+(BOX[2]+BOX[3])/2*sc;
+      const S=([x,y])=>[ox+x*sc,oy-y*sc];
+      // The marked soldier's eye and field of view.
+      const me=shapes[ME],eyeP=me.verts[0],face=Math.PI+panic*SPIN[ME]*(s===4?1+f.p:1);
+      const eye={x:eyeP[0],y:eyeP[1],dir:face,half:0.55,fog:0.55,near:0.6};
+      if(gone<0.6){
+        const O=S(eyeP),L=6;
+        g.globalAlpha=1-gone;g.setLineDash([4,4]);g.strokeStyle=pal.outline;g.lineWidth=1;
+        [-eye.half,eye.half].forEach(a=>{const q=S([eye.x+Math.sin(face+a)*L,eye.y+Math.cos(face+a)*L]);g.beginPath();g.moveTo(O[0],O[1]);g.lineTo(q[0],q[1]);g.stroke();});
+        g.setLineDash([]);g.globalAlpha=1;
+      }
+      shapes.forEach(sh=>{
+        if(sh.front){
+          const b=S(sh.back),fr=S(sh.front);
+          g.globalAlpha=sh.alpha;g.strokeStyle=css(pal.ink);g.lineWidth=2.5;g.lineCap='round';
+          g.beginPath();g.moveTo(b[0],b[1]);g.lineTo(fr[0],fr[1]);g.stroke();
+          g.fillStyle=pal.paperHex;g.lineWidth=1.2;g.beginPath();g.arc(fr[0],fr[1],3,0,TAU);g.fill();g.stroke();
+          g.globalAlpha=1;g.lineCap='butt';
+          return;
+        }
+        drawPoly(g,S,sh,pal,2.5);
+      });
+      const meS=S(me.verts[0]);
+      if(gone<0.5)label(g,'the marked soldier',meS[0],S([0,SOLDIER_Y+0.6])[1]-4);
+      if(gone<0.5)label(g,'soldiers',S([XS[0]-0.3,0])[0],S([0,SOLDIER_Y-0.7])[1]+4,'left');
+      if(open<0.5)label(g,'the regular classes',S([0,0])[0],S([0,REGULAR_Y-0.75])[1]+4);
+      label(g,'women, back foremost',S([0,0])[0],S([0,lerp(WOMEN_Y0,WOMEN_Y1,advance)-0.65])[1]+4);
+
+      if(gone>=0.99){
+        const[q,qw,qh]=C.setup(strip);
+        q.fillStyle=pal.paperHex;q.fillRect(0,0,qw,qh);
+        label(q,'nobody left to see',qw/2,qh/2+4);
+      }else{
+        drawStrip(strip,cast(shapes.filter(sh=>!sh.me),eye,pal,true),pal);
+      }
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // ?scene=disguise|charge shows one scene, so each can sit beside its own paragraph.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const SCENES={disguise:setupDisguise,charge:setupCharge};
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
+    SCENES[id](el);
+  });
+})();
+</script>
+</body>
+</html>

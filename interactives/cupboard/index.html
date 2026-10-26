@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deeds, Not Words · Flatland Fog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../shared/theme.css">
+<style>
+.head h1{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.2;margin:0;text-wrap:balance}
+.head p{font-family:var(--font-text);font-size:16px;margin:8px 0 0;max-width:62ch;color:var(--muted)}
+.head .back{font-size:13px;color:var(--muted);text-decoration:none;display:block}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0}
+.stage{display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.label{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em;margin-bottom:-4px}
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption{font-family:var(--font-text);font-style:italic;font-size:16px;color:var(--muted);min-height:3.2em;margin:0;flex:1;min-width:14em}
+.scenes{display:flex;flex-direction:column;gap:24px}
+.embedded .head,.embedded .panel h2{display:none}
+.embedded .wrap{padding-block:12px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <a class="back" href="../../read/17-how-the-sphere-having-in-vain-tried-words.html">← Section XVII · How the Sphere, Having in Vain Tried Words, Resorted to Deeds</a>
+    <h1>Deeds, not words</h1>
+    <p>The Sphere proves the Third Dimension by what he does: he takes a tablet out of a locked cupboard without opening it, and touches the Square inside his stomach. Each scene shows the room from above, as we see it, and Spaceland from the side, where the whole of Flatland is one line.</p>
+  </header>
+
+  <div class="scenes">
+    <section class="panel" id="cupboard">
+      <h2>The locked cupboard</h2>
+      <div class="stage">
+        <div class="label">The Square’s room, from above</div>
+        <canvas class="paper top" style="height:clamp(200px,48vw,300px)" role="img" aria-label="The Sphere, above the plane, moves over the locked cupboard, comes down inside it, takes one of the two tablets and rises with it; the Square opens the door and finds one tablet gone, and the Sphere comes down again in the far corner with the tablet"></canvas>
+        <div class="label">Spaceland, from the side</div>
+        <canvas class="paper side" style="height:clamp(110px,24vw,150px)" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+
+    <section class="panel" id="stomach">
+      <h2>The least touch</h2>
+      <div class="stage">
+        <div class="label">The Square, from above</div>
+        <canvas class="paper top" style="height:clamp(170px,38vw,230px)" role="img" aria-label="The Sphere moves over the Square and dips into the plane inside him, then rises and comes down beside him, growing as he arrives"></canvas>
+        <div class="label">Spaceland, from the side</div>
+        <canvas class="paper side" style="height:clamp(110px,24vw,150px)" aria-hidden="true"></canvas>
+      </div>
+      <div class="foot">
+        <p class="caption" aria-live="polite"></p>
+        <button aria-pressed="false">Play</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../../shared/canvas.js"></script>
+<script src="../../shared/player.js"></script>
+<script src="../../shared/embed.js"></script>
+<script>
+(function(){
+  const C=FlatlandCanvas,P=FlatlandPlayer;
+  const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+  const TAU=2*Math.PI;
+  const clamp01=v=>Math.max(0,Math.min(1,v));
+  const lerp=(a,b,k)=>a+(b-a)*k;
+  // The Sphere's radius, in the same units as the room.
+  const R=0.8,HIGH=2.2;
+
+  function bind(el,phases,draw){
+    P.create({
+      duration:P.total(phases),stage:el.querySelector('.stage'),button:el.querySelector('button'),
+      caption:el.querySelector('.caption'),steps:P.steps(phases,'text'),
+      draw:t=>draw(P.phaseAt(phases,t),t)
+    });
+  }
+
+  function label(g,text,x,y,align,strong){
+    g.font=MONO;g.fillStyle=C.token(strong?'--ink':'--muted');g.textAlign=align||'center';
+    if(g.textAlign==='center'){
+      const half=g.measureText(text).width/2+4;
+      x=Math.max(half,Math.min(g.canvas.clientWidth-half,x));
+    }
+    g.fillText(text,x,y);g.textAlign='left';
+  }
+
+  // Maps the world box [x0, x1, y0, y1] onto the canvas, y up.
+  function fit(w,h,box,pad){
+    const sc=Math.max(0.01,Math.min((w-2*pad)/(box[1]-box[0]),(h-2*pad)/(box[3]-box[2])));
+    const ox=w/2-(box[0]+box[1])/2*sc,oy=h/2+(box[2]+box[3])/2*sc;
+    return{sc,S:(x,y)=>[ox+x*sc,oy-y*sc]};
+  }
+
+  // Where the Sphere meets the plane: a Circle, or nothing while he is wholly above it.
+  function section(z){return Math.abs(z)<R?Math.sqrt(R*R-z*z):0;}
+
+  function drawSquare(g,S,sc,x,y,side,shake){
+    const[cx,cy]=S(x,y),s=side*sc;
+    g.save();g.translate(cx+(shake||0),cy);
+    g.fillStyle=C.token('--paper-2');g.strokeStyle=C.token('--ink');g.lineWidth=1.8;
+    g.beginPath();g.rect(-s/2,-s/2,s,s);g.fill();g.stroke();
+    g.restore();
+  }
+
+  // The Sphere from above: the Circle where he cuts the plane, and his outline dashed while he
+  // is out of it.
+  function drawSphereTop(g,S,sc,x,y,z){
+    const[cx,cy]=S(x,y),r=section(z);
+    if(z>0.02){
+      g.globalAlpha=clamp01(0.25+0.5*(z/HIGH));
+      g.setLineDash([4,4]);g.strokeStyle=C.token('--ink');g.lineWidth=1;
+      g.beginPath();g.arc(cx,cy,R*sc,0,TAU);g.stroke();g.setLineDash([]);
+      g.globalAlpha=1;
+    }
+    if(r>0.01){
+      g.fillStyle=C.token('--paper-2');g.strokeStyle=C.token('--ink');g.lineWidth=1.8;
+      g.beginPath();g.arc(cx,cy,r*sc,0,TAU);g.fill();g.stroke();
+    }
+  }
+
+  // The Sphere from the side, lit from the upper left; the plane is the line z = 0.
+  function drawSphereSide(g,S,sc,x,z){
+    const[cx,cy]=S(x,z),r=R*sc;
+    g.fillStyle=C.token('--paper-2');g.beginPath();g.arc(cx,cy,r,0,TAU);g.fill();
+    const light=g.createRadialGradient(cx-r*0.35,cy-r*0.35,0,cx-r*0.35,cy-r*0.35,r*0.9);
+    light.addColorStop(0,'rgba(255,255,255,0.75)');light.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle=light;g.fill();
+    const dark=g.createRadialGradient(cx,cy,r*0.55,cx,cy,r);
+    dark.addColorStop(0,'rgba(0,0,0,0)');dark.addColorStop(1,'rgba(0,0,0,0.35)');
+    g.fillStyle=dark;g.fill();
+    g.strokeStyle=C.token('--ink');g.lineWidth=1.5;g.stroke();
+  }
+
+  // Flatland seen edge on: a line, with whatever lies in it drawn as a thicker stretch.
+  function drawPlane(g,S,w,spans){
+    const[,y]=S(0,0);
+    g.strokeStyle=C.token('--line-strong');g.lineWidth=1.5;g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke();
+    spans.forEach(([x0,x1,weight])=>{
+      const a=S(x0,0)[0],b=S(x1,0)[0];
+      g.strokeStyle=C.token('--ink');g.lineWidth=weight;g.beginPath();g.moveTo(a,y);g.lineTo(b,y);g.stroke();
+    });
+    label(g,'Flatland',6,y+14,'left');
+  }
+
+  // A tablet of accounts: a small slab; above the plane it is dashed.
+  function drawTablet(g,S,sc,x,y,above){
+    const[cx,cy]=S(x,y),tw=0.5*sc,th=0.22*sc;
+    if(above){g.globalAlpha=0.55;g.setLineDash([3,3]);}
+    g.fillStyle=above?'rgba(0,0,0,0)':C.token('--ink');g.strokeStyle=C.token('--ink');g.lineWidth=1.2;
+    g.beginPath();g.rect(cx-tw/2,cy-th/2,tw,th);g.fill();g.stroke();
+    g.setLineDash([]);g.globalAlpha=1;
+  }
+
+  // The Sphere comes down into the locked cupboard, takes a tablet, and comes down again elsewhere.
+  function setupCupboard(el){
+    const top=el.querySelector('.top'),side=el.querySelector('.side');
+    const ROOM=[0,12,0,7],CUP=[8,11,3.6,6.6],DOOR=[8.7,10.3];
+    const BOXES=[8.7,9.5,10.3],TABLETS=[[8.55,4.9],[10.45,4.9]];
+    const START=[5.4,4.6],OVER=[9.5,4.9],GRASP=[10.0,4.9],CORNER=[1.4,1.3],DROP=[2.6,1.3];
+    const ME0=[6.4,2.8],ME1=[10.8,2.5],ME_SIDE=0.9;
+    const LOW=Math.sqrt(R*R-0.6*0.6);
+    const PHASES=P.pace([
+      {ms:2600,step:0,text:'“I have told you I can see from my position in Space the inside of all things that you consider closed.”'},
+      {ms:2600,step:1,text:'“I see in yonder cupboard … several of what you call boxes … full of money; I see also two tablets of accounts.”'},
+      {ms:3000,step:2,text:'“I saw you lock the cupboard half an hour ago, and I know you have the key in your possession.”'},
+      {ms:3000,step:3,text:'“But I descend from Space; the doors, you see, remain unmoved. Now I am in the cupboard …”'},
+      {ms:2600,step:4,text:'“… and am taking the tablet. Now I have it.”'},
+      {ms:3000,step:5,text:'“Now I ascend with it.”'},
+      {ms:3200,step:6,text:'“I rushed to the closet and dashed the door open. One of the tablets was gone.”'},
+      {ms:3400,step:7,text:'“With a mocking laugh, the Stranger appeared in the other corner of the room, and at the same time the tablet appeared upon the floor.”'},
+      {ms:2600,step:8,text:'“What you call Solid things are really superficial; what you call Space is really nothing but a great Plane.”'}
+    ],'text');
+
+    // Where everything is at this moment: the Sphere's centre (x, y, z), the tablet he takes
+    // (x, y, z), the Square, and how far the door has swung open (0 to 1).
+    function state(f){
+      const s=f.phase.step,e=P.ease(f.p);
+      let sp=[START[0],START[1],HIGH],tab=[TABLETS[1][0],TABLETS[1][1],0],me=ME0,door=0;
+      const carried=z=>[sp[0],sp[1],Math.max(0,z-R+0.05)];
+      if(s===2)sp=[lerp(START[0],OVER[0],e),lerp(START[1],OVER[1],e),HIGH];
+      if(s===3)sp=[OVER[0],OVER[1],lerp(HIGH,LOW,e)];
+      if(s===4){
+        const k=P.ease(clamp01(f.p/0.6)),hold=P.ease(clamp01((f.p-0.5)/0.5));
+        sp=[lerp(OVER[0],GRASP[0],k),OVER[1],LOW];
+        tab=[lerp(TABLETS[1][0],GRASP[0],hold),TABLETS[1][1],0];
+      }
+      if(s===5){sp=[GRASP[0],GRASP[1],lerp(LOW,HIGH,e)];tab=carried(sp[2]);}
+      if(s>=6){
+        const k=s===6?e:1;
+        sp=[lerp(GRASP[0],CORNER[0],k),lerp(GRASP[1],CORNER[1],k),HIGH];
+        me=[lerp(ME0[0],ME1[0],P.ease(clamp01(f.p/0.6))),lerp(ME0[1],ME1[1],P.ease(clamp01(f.p/0.6)))];
+        if(s>6)me=ME1;
+        door=s===6?P.ease(clamp01((f.p-0.55)/0.45)):1;
+        tab=carried(HIGH);tab[0]=sp[0];tab[1]=sp[1];
+      }
+      if(s>=7){
+        const k=s===7?e:1;
+        sp=[CORNER[0],CORNER[1],lerp(HIGH,0,k)];
+        // The tablet is lowered beside him and set down on the floor as he arrives.
+        const lay=s===7?P.ease(clamp01((f.p-0.3)/0.7)):1;
+        tab=[lerp(CORNER[0],DROP[0],lay),CORNER[1],lerp(Math.max(0,sp[2]-R+0.05),0,lay)];
+      }
+      return{s,sp,tab,me,door};
+    }
+
+    function draw(f){
+      const st=state(f),{s,sp,tab,me,door}=st;
+      const taken=s>=5||s===4&&f.p>0.95;
+      const inside=taken?1:2;
+
+      const[g,w,h]=C.setup(top);
+      const{sc,S}=fit(w,h,ROOM,10);
+      // The room's walls.
+      g.strokeStyle=C.token('--line-strong');g.lineWidth=1;
+      const a=S(ROOM[0],ROOM[3]),b=S(ROOM[1],ROOM[2]);g.strokeRect(a[0],a[1],b[0]-a[0],b[1]-a[1]);
+      // The cupboard: four walls, the door in the near wall swinging out on its left hinge.
+      const c0=S(CUP[0],CUP[3]),c1=S(CUP[1],CUP[2]);
+      g.strokeStyle=C.token('--ink');g.lineWidth=3;g.lineCap='round';
+      g.beginPath();
+      g.moveTo(S(DOOR[0],CUP[2])[0],c1[1]);g.lineTo(c0[0],c1[1]);g.lineTo(c0[0],c0[1]);
+      g.lineTo(c1[0],c0[1]);g.lineTo(c1[0],c1[1]);g.lineTo(S(DOOR[1],CUP[2])[0],c1[1]);
+      g.stroke();
+      const hinge=S(DOOR[0],CUP[2]),len=(DOOR[1]-DOOR[0])*sc,ang=-door*Math.PI/2;
+      g.beginPath();g.moveTo(hinge[0],hinge[1]);g.lineTo(hinge[0]+len*Math.cos(ang),hinge[1]-len*Math.sin(ang));g.stroke();
+      g.lineCap='butt';
+      // Money boxes, with no tops nor bottoms: plain squares.
+      BOXES.forEach(x=>{const p=S(x,6.1),bs=0.42*sc;g.strokeStyle=C.token('--ink');g.lineWidth=1.2;g.strokeRect(p[0]-bs/2,p[1]-bs/2,bs,bs);});
+      drawTablet(g,S,sc,TABLETS[0][0],TABLETS[0][1],false);
+      drawTablet(g,S,sc,tab[0],tab[1],tab[2]>0.01);
+      drawSquare(g,S,sc,me[0],me[1],ME_SIDE,0);
+      drawSphereTop(g,S,sc,sp[0],sp[1],sp[2]);
+      label(g,'the cupboard',S((CUP[0]+CUP[1])/2,CUP[3])[0],c0[1]-6);
+      label(g,'the Square',S(me[0],me[1])[0],S(me[0],me[1])[1]+ME_SIDE*sc/2+14);
+      // Over the cupboard the Sphere is named only in the side view.
+      const spS=S(sp[0],sp[1]),overCup=sp[0]+R>CUP[0]&&sp[1]+R>CUP[2];
+      if(!overCup)label(g,sp[2]>R?'the Sphere, above':'the Sphere',spS[0],spS[1]-R*sc-6);
+      label(g,door>0?'door: open':'door: locked',a[0]+8,a[1]+16,'left',door>0);
+      label(g,'tablets inside: '+inside,a[0]+8,a[1]+32,'left',inside<2);
+
+      // From the side, the cupboard, the tablets and the Square are stretches of the one line.
+      const[q,qw,qh]=C.setup(side);
+      const v=fit(qw,qh,[ROOM[0],ROOM[1],-0.5,HIGH+R+0.1],8);
+      const spans=[[CUP[0],CUP[1],5],[me[0]-ME_SIDE/2,me[0]+ME_SIDE/2,5],[TABLETS[0][0]-0.25,TABLETS[0][0]+0.25,7]];
+      if(tab[2]<0.01)spans.push([tab[0]-0.25,tab[0]+0.25,7]);
+      drawPlane(q,v.S,qw,spans);
+      drawSphereSide(q,v.S,v.sc,sp[0],sp[2]);
+      if(tab[2]>=0.01){
+        const t0=v.S(tab[0]-0.25,tab[2]),t1=v.S(tab[0]+0.25,tab[2]);
+        q.strokeStyle=C.token('--ink');q.lineWidth=4;q.beginPath();q.moveTo(t0[0],t0[1]);q.lineTo(t1[0],t1[1]);q.stroke();
+      }
+      label(q,'the cupboard',v.S((CUP[0]+CUP[1])/2,0)[0],v.S(0,0)[1]+14);
+      const sS=v.S(sp[0],sp[2]);
+      const toLeft=sp[0]>CUP[0];
+      label(q,'the Sphere',sS[0]+(toLeft?-1:1)*(R*v.sc+6),sS[1]+4,toLeft?'right':'left');
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // The Sphere dips into the plane inside the Square, then comes down again beside him.
+  function setupStomach(el){
+    const top=el.querySelector('.top'),side=el.querySelector('.side');
+    const BOX=[1,11,0.6,5.4],ME=[5,3],ME_SIDE=1.6,AWAY=[8.6,3];
+    const DIP=R-0.15;
+    const PHASES=P.pace([
+      {ms:2800,step:0,text:'“And, as a crowning proof, what do you say to my giving you a touch, just the least touch, in your stomach?”'},
+      {ms:2600,step:1,text:'“It will not seriously injure you, and the slight pain you may suffer cannot be compared with the mental benefit you will receive.”'},
+      {ms:2600,step:2,text:'“Before I could utter a word of remonstrance, I felt a shooting pain in my inside, and a demoniacal laugh seemed to issue from within me.”'},
+      {ms:2400,step:3,text:'“A moment afterwards the sharp agony had ceased, leaving nothing but a dull ache behind …”'},
+      {ms:3800,step:4,text:'“… and the Stranger began to reappear, saying, as he gradually increased in size, ‘There, I have not hurt you much, have I?’”'}
+    ],'text');
+
+    function draw(f,t){
+      const s=f.phase.step,e=P.ease(f.p);
+      let sp=[AWAY[0],AWAY[1],HIGH];
+      if(s===1)sp=[lerp(AWAY[0],ME[0],e),ME[1],HIGH];
+      if(s===2)sp=[ME[0],ME[1],lerp(HIGH,DIP,P.ease(clamp01(f.p/0.5)))];
+      // He rises out of the plane first, then moves aside.
+      if(s===3)sp=[lerp(ME[0],AWAY[0],P.ease(clamp01((f.p-0.4)/0.6))),ME[1],lerp(DIP,HIGH,P.ease(clamp01(f.p/0.5)))];
+      if(s===4)sp=[AWAY[0],AWAY[1],lerp(HIGH,0,e)];
+      const within=sp[2]<R&&Math.abs(sp[0]-ME[0])<ME_SIDE/2;
+      // He shudders while the Sphere is inside him.
+      const shake=within?2*Math.sin(t/28):0;
+
+      const[g,w,h]=C.setup(top);
+      const{sc,S}=fit(w,h,BOX,10);
+      drawSquare(g,S,sc,ME[0],ME[1],ME_SIDE,shake);
+      drawSphereTop(g,S,sc,sp[0],sp[1],sp[2]);
+      const meS=S(ME[0],ME[1]),spS=S(sp[0],sp[1]);
+      label(g,'the Square',meS[0],meS[1]+ME_SIDE*sc/2+14);
+      if(Math.abs(sp[0]-ME[0])>R+ME_SIDE/2)label(g,sp[2]>R?'the Sphere, above':'the Sphere',spS[0],spS[1]-R*sc-6);
+      label(g,within?'inside the Square: something':'inside the Square: nothing',10,18,'left',within);
+
+      const[q,qw,qh]=C.setup(side);
+      const v=fit(qw,qh,[BOX[0],BOX[1],-0.5,HIGH+R+0.1],8);
+      drawPlane(q,v.S,qw,[[ME[0]-ME_SIDE/2,ME[0]+ME_SIDE/2,5]]);
+      drawSphereSide(q,v.S,v.sc,sp[0],sp[2]);
+      label(q,'the Square',v.S(ME[0],0)[0],v.S(0,0)[1]+14);
+      return f.phase.text;
+    }
+    bind(el,PHASES,draw);
+  }
+
+  // ?scene=cupboard|stomach shows one scene, so each can sit beside its own paragraph.
+  const scene=new URLSearchParams(location.search).get('scene');
+  const SCENES={cupboard:setupCupboard,stomach:setupStomach};
+  Object.keys(SCENES).forEach(id=>{
+    const el=document.getElementById(id);
+    if(SCENES[scene]&&scene!==id){el.hidden=true;return;}
+    SCENES[id](el);
+  });
+})();
+</script>
+</body>
+</html>

@@ -84,6 +84,12 @@ EMBEDS = {
     9: [
         {"after": "illustration-5", "slug": "colour-bill", "title": "A woman and a Priest under the Colour Bill"},
     ],
+    10: [
+        {"after": "text:the twelve colours of a Dodecagon", "slug": "sedition", "query": "scene=disguise",
+         "title": "Twelve colours on three sides"},
+        {"after": "text:back foremost, invisibly and unerringly", "slug": "sedition", "query": "scene=charge",
+         "title": "Back foremost"},
+    ],
     13: [
         {"after": "text:and then all was silence", "slug": "lineland", "query": "scene=dream",
          "title": "The dream of Lineland"},
@@ -98,9 +104,21 @@ EMBEDS = {
         {"after": "illustration-7", "slug": "passing-through", "query": "scene=lineland",
          "title": "The Square leaves Lineland"},
     ],
+    15: [
+        {"after": "text:moving somehow parallel to itself", "slug": "three-cubed", "query": "scene=lesson",
+         "title": "A lesson in arithmetic"},
+        {"after": "text:many Circles in one", "slug": "three-cubed", "query": "scene=stranger",
+         "title": "A Figure in the room"},
+    ],
     16: [
         {"after": "text:he diminished and finally vanished", "slug": "passing-through", "query": "scene=sphere",
          "title": "The Sphere rises out of Flatland"},
+    ],
+    17: [
+        {"after": "text:it was the missing tablet", "slug": "cupboard", "query": "scene=cupboard",
+         "title": "The locked cupboard"},
+        {"after": "text:as he gradually increased in size", "slug": "cupboard", "query": "scene=stomach",
+         "title": "The least touch"},
     ],
     18: [
         {"after": "text:the secrets of the earth", "slug": "view-from-above", "title": "The view from above"},
@@ -305,9 +323,7 @@ def chapter_page(ch, prev, nxt, notes, epigraph):
 def index_page(chapters, epigraphs):
     def entry(ch):
         tag = f'<span class="num">{ch["ordinal"]}</span>' if ch["ordinal"] else '<span class="num"></span>'
-        number = int(ch["name"].split("-")[1]) if ch["name"].startswith("chapter-") else 0
-        badge = '<span class="badge">interactive</span>' if number in EMBEDS else ""
-        return f'<li><a href="read/{ch["file"]}">{tag}<span class="t">{html.escape(ch["title"])}</span>{badge}</a></li>'
+        return f'<li><a href="read/{ch["file"]}">{tag}<span class="t">{html.escape(ch["title"])}</span></a></li>'
 
     groups = []
     front = [c for c in chapters if not c["part"]]
