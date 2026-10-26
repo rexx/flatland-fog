@@ -1,0 +1,55 @@
+<!doctype html>
+<!-- Source of docs/social-card.png, the 1200 x 630 preview shown when a link is shared.
+     Render it with a headless browser at that window size; see the README. -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Flatland Fog social card</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--paper:#ECECE9;--ink:#1B1B1B;--muted:#5E5E5C;--line:#A8A8A4;--fill:#D2D2CE}
+html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:var(--paper);color:var(--ink)}
+.card{display:grid;grid-template-columns:600px 600px;height:630px}
+.text{padding:72px 0 64px 72px;display:flex;flex-direction:column}
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:20px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:"Libre Caslon Display",Georgia,serif;font-weight:400;font-size:104px;line-height:1;margin:28px 0 0}
+p{font-family:"Libre Caslon Text",Georgia,serif;font-size:28px;line-height:1.4;color:var(--muted);margin:28px 0 0;max-width:500px}
+p cite{font-style:italic;color:var(--ink)}
+.foot{margin-top:auto;font-family:"IBM Plex Mono",monospace;font-size:20px;color:var(--muted)}
+svg{display:block}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="text">
+    <div class="kicker">Edwin A. Abbott · 1884</div>
+    <h1>Flatland Fog</h1>
+    <p>An interactive reading of <cite>Flatland: A Romance of Many Dimensions</cite>, with working models of its thought experiments.</p>
+    <div class="foot">rexx.github.io/flatland-fog</div>
+  </div>
+  <svg width="600" height="630" viewBox="0 0 600 630" aria-hidden="true">
+    <defs>
+      <!-- What a Flatlander sees of a Pentagon, corner first: bright at the corner, fading into the fog. -->
+      <linearGradient id="fog" x1="0" x2="1">
+        <stop offset="0" stop-color="#FFFFFF"/>
+        <stop offset="0.18" stop-color="#9A9A97"/>
+        <stop offset="0.5" stop-color="#1B1B1B"/>
+        <stop offset="0.82" stop-color="#9A9A97"/>
+        <stop offset="1" stop-color="#FFFFFF"/>
+      </linearGradient>
+      <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+        <line x1="0" y1="0" x2="0" y2="10" stroke="#DCDCD8" stroke-width="2"/>
+      </pattern>
+    </defs>
+    <!-- From above: the Pentagon, corner toward the observer, and the observer's field of view. -->
+    <line x1="300" y1="470" x2="90" y2="40" stroke="#A8A8A4" stroke-width="2" stroke-dasharray="8 8"/>
+    <line x1="300" y1="470" x2="510" y2="40" stroke="#A8A8A4" stroke-width="2" stroke-dasharray="8 8"/>
+    <polygon points="300,262 395,193 359,82 241,82 205,193" fill="#D2D2CE" stroke="#1B1B1B" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="300" cy="470" r="10" fill="#1B1B1B"/>
+    <!-- The one line he sees. -->
+    <rect x="60" y="520" width="480" height="48" rx="8" fill="url(#hatch)" stroke="#DADAD7" stroke-width="2"/>
+    <rect x="132" y="521" width="336" height="46" fill="url(#fog)"/>
+  </svg>
+</div>
+</body>
+</html>

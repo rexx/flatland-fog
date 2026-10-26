@@ -34,6 +34,7 @@ Then open <http://localhost:8000/>. Opening `index.html` straight from disk also
 | `shared/` | Theme, geometry, canvas drawing, the 3D slab renderer and the play-once animation player shared by the interactives |
 | `tools/import_text.py` | Regenerates `read/` and `index.html` from the Standard Ebooks source |
 | `docs/PLAN.md` | Plan: which section gets which interactive, and the milestones |
+| `tools/social-card.html` | Source of `docs/social-card.png`, the link preview every page points to; render it at 1200 × 630, for example with `--headless=new --window-size=1200,630 --screenshot` in Chrome or Edge |
 | `docs/screenshots/` | The screenshots in this README, taken at a fixed moment with `?embed=1&t=<ms>` |
 
 ## Interactives

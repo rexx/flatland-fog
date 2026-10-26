@@ -19,6 +19,11 @@ EPUB_TYPE = "{http://www.idpf.org/2007/ops}type"
 ROOT = Path(__file__).resolve().parent.parent
 
 SITE_TITLE = "Flatland Fog"
+SITE_URL = "https://rexx.github.io/flatland-fog/"
+SITE_DESCRIPTION = ("An interactive reading of Flatland: A Romance of Many Dimensions, "
+                    "with working models of its thought experiments.")
+# Shown when a link to any page is shared; its source is tools/social-card.html.
+SOCIAL_CARD = SITE_URL + "docs/social-card.png"
 FONTS = ("https://fonts.googleapis.com/css2?family=Libre+Caslon+Display"
          "&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap")
 
@@ -222,7 +227,23 @@ def read_chapter(src, name):
     return {"name": name, "title": title, "ordinal": ordinal, "part": section.get("data-parent"), "blocks": blocks}
 
 
-def page_head(title, depth):
+def share_meta(title, description, path):
+    """Description and link-preview tags; path is the page's address relative to the site root."""
+    t, d = html.escape(title), html.escape(description)
+    return f"""<meta name="description" content="{d}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{SITE_TITLE}">
+<meta property="og:title" content="{t}">
+<meta property="og:description" content="{d}">
+<meta property="og:url" content="{SITE_URL}{path}">
+<meta property="og:image" content="{SOCIAL_CARD}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+"""
+
+
+def page_head(title, depth, description, path):
     up = "../" * depth
     return f"""<!doctype html>
 <html lang="en-GB">
@@ -230,7 +251,7 @@ def page_head(title, depth):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{html.escape(title)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+{share_meta(title, description, path)}<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="{FONTS}">
 <link rel="stylesheet" href="{up}shared/theme.css">
@@ -298,7 +319,9 @@ def chapter_page(ch, prev, nxt, notes, epigraph):
         return f'<a href="{target["file"]}"><small>{label}</small>{html.escape(target["title"])}</a>'
 
     epigraph_html = f'<div class="epigraph">{epigraph}</div>' if epigraph else ""
-    return (page_head(f"{ch['title']} · {SITE_TITLE}", 1) + f"""<main class="wrap reader">
+    name = f"Section {ch['ordinal']}: {ch['title']}" if ch["ordinal"] else ch["title"]
+    description = f"{name}. From Edwin A. Abbott's Flatland (1884), with working models of its thought experiments."
+    return (page_head(f"{ch['title']} · {SITE_TITLE}", 1, description, f"read/{ch['file']}") + f"""<main class="wrap reader">
 <nav class="crumbs"><a href="../index.html">{SITE_TITLE}</a><span>{crumb}</span></nav>
 <header class="chapter-head">
 {f'<p class="eyebrow">{eyebrow}</p>' if eyebrow else ''}
@@ -333,7 +356,7 @@ def index_page(chapters, epigraphs):
         groups.append(f'<section class="toc-part"><h2>Part {roman} · {title}</h2>'
                       f'<div class="epigraph">{epigraphs[part_id]}</div><ol>{items}</ol></section>')
 
-    return (page_head(SITE_TITLE, 0) + f"""<main class="wrap home">
+    return (page_head(SITE_TITLE, 0, SITE_DESCRIPTION, "") + f"""<main class="wrap home">
 <header class="home-head">
 <p class="eyebrow">Edwin A. Abbott · 1884</p>
 <h1>Flatland Fog</h1>
