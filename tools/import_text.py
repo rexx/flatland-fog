@@ -52,6 +52,16 @@ EMBEDS = {
     9: [
         {"after": "illustration-5", "slug": "colour-bill", "title": "A woman and a Priest under the Colour Bill"},
     ],
+    13: [
+        {"after": "text:and then all was silence", "slug": "lineland", "query": "scene=dream",
+         "title": "The dream of Lineland"},
+        {"after": "text:from my own intestines", "slug": "lineland", "query": "scene=voice",
+         "title": "A voice from inside"},
+        {"after": "text:proximity is not necessary for marriage", "slug": "lineland", "query": "scene=neighbours",
+         "title": "Once neighbours, always neighbours"},
+        {"after": "text:three more births", "slug": "lineland", "query": "scene=chorus",
+         "title": "The Marriage Chorus"},
+    ],
     14: [
         {"after": "illustration-7", "slug": "passing-through", "query": "scene=lineland",
          "title": "The Square leaves Lineland"},
